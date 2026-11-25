@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="100%" height="100%">
+  <defs>
+    <linearGradient id="g_code" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.04"/>
+    </linearGradient>
+    <filter id="shadow_g_code" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <!-- Main Sheet -->
+  <path d="M10 5 C10 3.895 10.895 3 12 3 L30 3 L40 13 L40 43 C40 44.105 39.105 45 38 45 L12 45 C10.895 45 10 44.105 10 43 Z" 
+        fill="url(#g_code)" 
+        stroke="#8b5cf6" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Folded Corner -->
+  <path d="M30 3 L30 13 L40 13 Z" fill="#8b5cf6" opacity="0.35" stroke="#8b5cf6" stroke-width="2" stroke-linejoin="round"/>
+  
+  <rect x="13" y="16" width="13" height="2" rx="1" fill="#8b5cf6" opacity="0.55"/>
+  <rect x="13" y="20" width="16" height="2" rx="1" fill="#8b5cf6" opacity="0.4"/>
+
+  <!-- Badge Box -->
+  <rect x="10" y="26" width="28" height="14" rx="4" fill="#6d28d9" filter="url(#shadow_g_code)"/>
+  <text x="24" y="33.5" dominant-baseline="central" fill="#ffffff" font-size="7.2" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-weight="800" text-anchor="middle" letter-spacing="0">CODE</text>
+</svg>

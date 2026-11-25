@@ -1,0 +1,6 @@
+{
+  "name": "PyDrop",
+  "description": "Pure Python Flask file transfer and explorer application.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,88 @@
+plugins {
+    id 'com.android.application'
+}
+
+// La page mobile est partagée avec la version servie par le PC : on la copie depuis ../mob
+def syncWeb = tasks.register('syncWeb', Copy) {
+    from("${rootDir}/../mob") {
+        include 'index.html'
+        include 'envelope.js'
+        include 'splash.js'
+        include 'SVG Mobile/logo.png'
+        include 'SVG Mobile/html5-qrcode.min.js'
+    }
+    into "${projectDir}/src/main/assets/www"
+}
+tasks.named('preBuild') { dependsOn syncWeb }
+
+def keyProps = new Properties()
+def keyFile = rootProject.file('keystore.properties')
+if (keyFile.exists()) keyFile.withInputStream { keyProps.load(it) }
+
+android {
+    namespace 'com.seraphin.pydrop'
+    compileSdk 33
+
+    defaultConfig {
+        applicationId 'com.seraphin.pydrop'
+        minSdk 24
+        targetSdk 33
+        versionCode 14
+        versionName '1.9.1'
+    }
+
+    signingConfigs {
+        release {
+            if (keyFile.exists()) {
+                storeFile rootProject.file(keyProps['storeFile'])
+                storePassword keyProps['storePassword']
+                keyAlias keyProps['keyAlias']
+                keyPassword keyProps['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig keyFile.exists() ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    // Deux éditions, même application (on passe de l'une à l'autre sans désinstaller) :
+    //   standard : sans l'accès aux notifications — Play Protect l'installe sans bloquer
+    //   complet  : avec « Notifications sur le PC » (Play Protect peut la bloquer hors Play Store)
+    flavorDimensions = ['edition']
+    productFlavors {
+        standard { dimension 'edition' }
+        complet { dimension 'edition' }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    // yt-dlp embarqué : un APK par type de processeur, pour qu'aucun ne soit trop lourd
+    //   arm64-v8a   : presque tous les téléphones récents
+    //   armeabi-v7a : anciens téléphones 32 bits
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'arm64-v8a', 'armeabi-v7a'
+            universalApk false
+        }
+    }
+    packaging {
+        jniLibs { useLegacyPackaging true }
+    }
+}
+
+dependencies {
+    // Téléchargement de vidéos directement sur le téléphone (yt-dlp + ffmpeg pour Android)
+    implementation 'io.github.junkfood02.youtubedl-android:library:0.18.1'
+    implementation 'io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1'
+    // Connexion à YouTube : permet de ne pas signaler la WebView à Google
+    implementation 'androidx.webkit:webkit:1.7.0'
+}

@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PyDrop Mobile - Passerelle & Partage</title>
+    <!-- Script de Scan QR : Chargement local depuis SVG Mobile (100% Hors-Ligne) avec repli CDN -->
+    <script src="SVG Mobile/html5-qrcode.min.js"></script>
+    <script>
+        if (typeof Html5Qrcode === 'undefined') {
+            document.write('<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"><\/script>');
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #0366d6;
+            --primary-light: #38bdf8;
+            --accent: #f68b1e;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0a0e1a;
+            --card-bg: #131a2b;
+            --card-border: rgba(56, 189, 248, 0.2);
+            --text-main: #f1f5f9;
+            --text-sub: #94a3b8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .icon-img {
+            display: inline-block;
+            vertical-align: middle;
+            object-fit: contain;
+        }
+
+        /* VUE 1 : HUB D'ACCUEIL & SCAN */
+        #hubScreen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px 18px 24px;
+            max-width: 480px;
+            margin: 0 auto;
+            width: 100%;
+            gap: 16px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 0 6px;
+        }
+
+        .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-box img {
+            width: 38px;
+            height: 38px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 10px rgba(3, 102, 214, 0.4));
+        }
+
+        .logo-title {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-title span:first-child { color: var(--primary-light); }
+        .logo-title span:last-child { color: var(--accent); }
+
+        .app-badge {
+            font-size: 11px;
+            background: rgba(3, 102, 214, 0.15);
+            color: var(--primary-light);
+            border: 1px solid rgba(3, 102, 214, 0.35);
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-sub);
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* 1. CARTE ORDINATEUR DU POINT D'ACCÈS DÉTECTÉ */
+        .detected-card {
+            background: linear-gradient(135deg, #162238 0%, #0f172a 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: 0 8px 24px rgba(3, 102, 214, 0.2);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .detected-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light), var(--accent));
+        }
+
+        .detected-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            gap: 8px;
+        }
+
+        .device-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .device-icon-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(3, 102, 214, 0.15);
+            border: 1px solid rgba(3, 102, 214, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .device-text {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .device-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .device-ip {
+            font-size: 12px;
+            color: var(--text-sub);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--success);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .status-pill.searching {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: rgba(56, 189, 248, 0.35);
+            color: var(--primary-light);
+        }
+
+        .status-pill.offline {
+            background: rgba(246, 139, 30, 0.15);
+            border-color: rgba(246, 139, 30, 0.35);
+            color: var(--accent);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 6px currentColor;
+        }
+
+        .status-pill.searching .status-dot {
+            animation: pulseDot 1s infinite alternate;
+        }
+
+        @keyframes pulseDot {
+            from { opacity: 0.4; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1.2); }
+        }
+
+        .btn-connect-detected {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 14px;
+            padding: 13px 18px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(3, 102, 214, 0.35);
+            transition: all 0.2s ease;
+        }
+
+        .btn-connect-detected:active {
+            transform: scale(0.98);
+        }
+
+        /* 2. SCANNER QR BUTTON CARD */
+        .scanner-trigger-card {
+            background: linear-gradient(135deg, #131a2b 0%, #0d121f 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 15px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+        }
+
+        .scanner-trigger-card:active {
+            transform: scale(0.98);
+            border-color: var(--accent);
+        }
+
+        .qr-icon-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(246, 139, 30, 0.15);
+            border: 1px solid rgba(246, 139, 30, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .scanner-trigger-details {
+            flex: 1;
+        }
+
+        .scanner-trigger-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .scanner-trigger-desc {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        /* 3. SAISIE MANUELLE IP */
+        .manual-card {
+            background: linear-gradient(135deg, #131a2b 0%, #0d121f 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .manual-input-box {
+            display: flex;
+            gap: 8px;
+        }
+
+        .ip-input {
+            flex: 1;
+            background: #0a0e1a;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 11px 14px;
+            color: #ffffff;
+            font-size: 13px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .ip-input:focus {
+            border-color: var(--primary-light);
+        }
+
+        .btn-ip-connect {
+            background: #1e293b;
+            color: var(--primary-light);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 12px;
+            padding: 0 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .btn-ip-connect:active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .recents-title {
+            font-size: 11px;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+        }
+
+        .recents-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .recent-pill {
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            padding: 5px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            transition: all 0.2s;
+        }
+
+        .recent-pill:active {
+            background: rgba(3, 102, 214, 0.25);
+            border-color: var(--primary-light);
+            color: #ffffff;
+        }
+
+        .info-box {
+            background: rgba(3, 102, 214, 0.08);
+            border: 1px dashed rgba(3, 102, 214, 0.3);
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+        .info-box strong { color: var(--primary-light); }
+
+        /* VUE 2 : SCANNER QR PLEIN ÉCRAN */
+        #scannerScreen {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            background: #000000;
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+        }
+
+        .scanner-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: rgba(10, 14, 26, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 2;
+        }
+
+        .btn-close-scanner {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 7px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .reader-wrapper {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #qr-reader {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+        }
+
+        #qr-reader video {
+            object-fit: cover !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .scan-reticle {
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            border: 2px solid rgba(56, 189, 248, 0.7);
+            border-radius: 20px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .laser-beam {
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            box-shadow: 0 0 8px var(--accent);
+            animation: scanLaser 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes scanLaser {
+            0% { top: 15px; }
+            100% { top: 220px; }
+        }
+
+        .scanner-controls {
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(10, 14, 26, 0.95);
+            z-index: 2;
+        }
+
+        .scanner-btn {
+            background: #1e293b;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        /* VUE 3 : NAVIGATEUR INTÉGRÉ (IN-APP BROWSER) */
+        #browserScreen {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            background: var(--bg-dark);
+            position: fixed;
+            inset: 0;
+            z-index: 40;
+        }
+
+        .browser-navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #0f172a;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .browser-nav-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            padding: 6px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .browser-nav-btn:active {
+            background: rgba(3, 102, 214, 0.3);
+            border-color: var(--primary-light);
+        }
+
+        .browser-url-pill {
+            flex: 1;
+            min-width: 0;
+            background: #090d16;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 10px;
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .browser-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 6px var(--success);
+            flex-shrink: 0;
+        }
+
+        .browser-url-text {
+            font-size: 12px;
+            color: #cbd5e1;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .in-app-frame-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #0f172a;
+        }
+
+        #inAppFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            background: #0f172a;
+        }
+
+        .frame-loader {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #0a0e1a;
+            gap: 14px;
+            z-index: 5;
+            transition: opacity 0.3s ease;
+        }
+
+        .frame-loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(56, 189, 248, 0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #fff;
+            border: 1px solid rgba(3, 102, 214, 0.4);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- VUE 1 : HUB PRINCIPAL D'ACCUEIL -->
+    <div id="hubScreen">
+        <!-- En-tête avec Logo Drop.png & Nom -->
+        <div class="header">
+            <div class="logo-box">
+                <img src="SVG Mobile/drop.png" alt="PyDrop Logo" onerror="this.src='SVG Mobile/pydrop1.png';">
+                <div class="logo-title"><span>Py</span><span>Drop</span></div>
+            </div>
+            <div class="app-badge">
+                <span class="badge-dot"></span>
+                <span>Passerelle Mobile</span>
+            </div>
+        </div>
+
+        <!-- 1. CARTE ORDINATEUR DÉTECTÉ SUR LE POINT D'ACCÈS -->
+        <div>
+            <div class="section-label">
+                <span>Ordinateur & Point d'accès</span>
+                <span id="scanStatusText" style="color:var(--primary-light);cursor:pointer;" onclick="detectServer()">Actualiser ⟳</span>
+            </div>
+
+            <div class="detected-card" id="detectedCard">
+                <div class="detected-header">
+                    <div class="device-info">
+                        <div class="device-icon-box">
+                            <img src="SVG Mobile/monitor.svg" class="icon-img" width="24" height="24" alt="PC">
+                        </div>
+                        <div class="device-text">
+                            <div class="device-name" id="detectedName">Recherche de l'ordinateur...</div>
+                            <div class="device-ip" id="detectedIp">Détection du Point d'accès...</div>
+                        </div>
+                    </div>
+                    <div class="status-pill searching" id="detectedStatusPill">
+                        <div class="status-dot"></div>
+                        <span id="detectedStatusLabel">Détection...</span>
+                    </div>
+                </div>
+
+                <button class="btn-connect-detected" id="btnConnectDetected">
+                    <span>Ouvrir l'application sur mon Téléphone</span>
+                    <img src="SVG Mobile/arrow-up.svg" class="icon-img" width="18" height="18" style="transform: rotate(90deg);" alt="➔">
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. SCANNER LE QR CODE DE L'ÉCRAN -->
+        <div>
+            <div class="section-label">Scan Visuel Rapide</div>
+            <div class="scanner-trigger-card" id="btnOpenScanner">
+                <div class="qr-icon-circle">
+                    <img src="SVG Mobile/qr-code.svg" class="icon-img" width="24" height="24" alt="QR">
+                </div>
+                <div class="scanner-trigger-details">
+                    <div class="scanner-trigger-title">Scanner le QR Code de l'écran</div>
+                    <div class="scanner-trigger-desc">Ouvre l'appareil photo pour scanner le QR Code du PC</div>
+                </div>
+                <img src="SVG Mobile/arrow-up.svg" class="icon-img" width="16" height="16" style="transform: rotate(90deg); filter: invert(70%) sepia(80%) saturate(600%) hue-rotate(350deg);" alt="➔">
+            </div>
+        </div>
+
+        <!-- 3. SAISIE MANUELLE IP -->
+        <div>
+            <div class="section-label">Connexion Manuelle par IP</div>
+            <div class="manual-card">
+                <div class="manual-input-box">
+                    <input type="text" id="manualIpInput" class="ip-input" placeholder="ex: 192.168.1.50 (le port est ignoré)" autocomplete="off">
+                    <button class="btn-ip-connect" id="btnManualConnect">Accéder</button>
+                </div>
+
+                <div id="recentsContainer" style="display:none;">
+                    <div class="recents-title">Adresses mémorisées :</div>
+                    <div class="recents-list" id="recentsList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            💡 <strong>Astuce :</strong> Assurez-vous que votre téléphone est bien connecté au même réseau Wi-Fi ou au <strong>Point d'accès mobile</strong> de l'ordinateur.
+        </div>
+    </div>
+
+    <!-- VUE 2 : SCANNER QR PLEIN ÉCRAN -->
+    <div id="scannerScreen">
+        <div class="scanner-topbar">
+            <button class="btn-close-scanner" id="btnCloseScanner">
+                <img src="SVG Mobile/arrow-up.svg" class="icon-img" width="16" height="16" style="transform: rotate(-90deg);" alt="←">
+                <span>Retour</span>
+            </button>
+            <span style="font-size:14px;font-weight:700;color:var(--accent);">Scanner QR Code</span>
+            <div style="width:60px;"></div>
+        </div>
+
+        <div class="reader-wrapper">
+            <div id="qr-reader"></div>
+            <div class="scan-reticle">
+                <div class="laser-beam"></div>
+            </div>
+        </div>
+
+        <div class="scanner-controls">
+            <button class="scanner-btn" id="btnToggleCamera">
+                <img src="SVG Mobile/refresh-cw.svg" class="icon-img" width="16" height="16" alt="Changer">
+                <span>Changer caméra</span>
+            </button>
+            <button class="scanner-btn" id="btnRestartScan">
+                <img src="SVG Mobile/refresh-cw.svg" class="icon-img" width="16" height="16" alt="Réessayer">
+                <span>Réinitialiser</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- VUE 3 : NAVIGATEUR INTÉGRÉ (IN-APP BROWSER SANS QUITTER L'APPLICATION) -->
+    <div id="browserScreen">
+        <div class="browser-navbar">
+            <button class="browser-nav-btn" id="btnBrowserBack">
+                <img src="SVG Mobile/arrow-up.svg" class="icon-img" width="14" height="14" style="transform: rotate(-90deg);" alt="←">
+                <span>Hub</span>
+            </button>
+
+            <div class="browser-url-pill">
+                <div class="browser-dot"></div>
+                <div class="browser-url-text" id="browserUrlText">Connexion...</div>
+            </div>
+
+            <button class="browser-nav-btn" id="btnBrowserRefresh" title="Actualiser">
+                <img src="SVG Mobile/refresh-cw.svg" class="icon-img" width="14" height="14" alt="⟳">
+            </button>
+
+            <button class="browser-nav-btn" id="btnBrowserScan" title="Scanner QR">
+                <img src="SVG Mobile/qr-code.svg" class="icon-img" width="14" height="14" alt="QR">
+            </button>
+        </div>
+
+        <div class="in-app-frame-container">
+            <div class="frame-loader" id="frameLoader">
+                <div class="spinner"></div>
+                <div style="font-size:13px;color:var(--text-sub);">Chargement de PyDrop...</div>
+            </div>
+            <iframe id="inAppFrame" name="inAppFrame" allow="camera; microphone; geolocation; clipboard-read; clipboard-write; fullscreen"></iframe>
+        </div>
+    </div>
+
+    <div id="toast" class="toast-msg"></div>
+
+    <script>
+        let html5QrCode = null;
+        let currentFacingMode = "environment";
+        let isScannerRunning = false;
+        let detectedServerUrl = "";
+        let currentConnectedUrl = "";
+
+        // Éléments UI
+        const hubScreen = document.getElementById('hubScreen');
+        const scannerScreen = document.getElementById('scannerScreen');
+        const browserScreen = document.getElementById('browserScreen');
+        const inAppFrame = document.getElementById('inAppFrame');
+        const frameLoader = document.getElementById('frameLoader');
+        const browserUrlText = document.getElementById('browserUrlText');
+        const btnBrowserBack = document.getElementById('btnBrowserBack');
+        const btnBrowserRefresh = document.getElementById('btnBrowserRefresh');
+        const btnBrowserScan = document.getElementById('btnBrowserScan');
+
+        const manualIpInput = document.getElementById('manualIpInput');
+        const btnManualConnect = document.getElementById('btnManualConnect');
+        const btnOpenScanner = document.getElementById('btnOpenScanner');
+        const btnCloseScanner = document.getElementById('btnCloseScanner');
+        const btnConnectDetected = document.getElementById('btnConnectDetected');
+        const detectedName = document.getElementById('detectedName');
+        const detectedIp = document.getElementById('detectedIp');
+        const detectedStatusLabel = document.getElementById('detectedStatusLabel');
+        const detectedStatusPill = document.getElementById('detectedStatusPill');
+        const recentsContainer = document.getElementById('recentsContainer');
+        const recentsList = document.getElementById('recentsList');
+        const btnToggleCamera = document.getElementById('btnToggleCamera');
+        const btnRestartScan = document.getElementById('btnRestartScan');
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 2800);
+        }
+
+        function extractCleanIp(raw) {
+            let val = (raw || '').trim();
+            if (!val) return '';
+            // Remove protocol if present
+            val = val.replace(/^https?:\/\//i, '');
+            // Remove path or queries if present
+            val = val.split('/')[0].split('?')[0].split('#')[0];
+            // If the user entered a port (e.g. 192.168.1.35:5000 or :anything), strip the port to get pure IP
+            if (val.includes(':')) {
+                val = val.split(':')[0];
+            }
+            return val.trim();
+        }
+
+        function sanitizeUrl(raw) {
+            let url = (raw || '').trim();
+            if (!url) return '';
+            
+            const cleanIp = extractCleanIp(url);
+            if (!cleanIp) return '';
+            
+            // Reconstruct clean URL targeting PyDrop server port 5000
+            return `http://${cleanIp}:5000`;
+        }
+
+        function saveRecentUrl(url) {
+            if (!url) return;
+            let recents = JSON.parse(localStorage.getItem('pydrop_recents') || '[]');
+            recents = recents.filter(u => u !== url);
+            recents.unshift(url);
+            if (recents.length > 4) recents = recents.slice(0, 4);
+            localStorage.setItem('pydrop_recents', JSON.stringify(recents));
+            localStorage.setItem('pydrop_last_url', url);
+            renderRecents();
+        }
+
+        function renderRecents() {
+            const recents = JSON.parse(localStorage.getItem('pydrop_recents') || '[]');
+            if (recents.length > 0) {
+                recentsContainer.style.display = 'block';
+                recentsList.innerHTML = '';
+                recents.forEach(url => {
+                    const pill = document.createElement('div');
+                    pill.className = 'recent-pill';
+                    pill.textContent = url.replace('http://', '').replace('https://', '');
+                    pill.onclick = () => openInAppBrowser(url);
+                    recentsList.appendChild(pill);
+                });
+            } else {
+                recentsContainer.style.display = 'none';
+            }
+        }
+
+        // OUVERTURE DANS LE NAVIGATEUR INTÉGRÉ SANS QUITTER L'APPLICATION
+        function openInAppBrowser(targetUrl) {
+            const finalUrl = sanitizeUrl(targetUrl);
+            if (!finalUrl) {
+                showToast('Veuillez entrer une adresse valide');
+                return;
+            }
+
+            saveRecentUrl(finalUrl);
+            stopScanner();
+            currentConnectedUrl = finalUrl;
+
+            // Notifier le serveur de la connexion client
+            try {
+                fetch(`${finalUrl}/api/client/connect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userAgent: navigator.userAgent,
+                        platform: navigator.platform,
+                        clientTime: Date.now()
+                    })
+                }).catch(() => {});
+            } catch (e) {}
+
+            // Masquer les autres écrans et afficher le navigateur intégré
+            hubScreen.style.display = 'none';
+            scannerScreen.style.display = 'none';
+            browserScreen.style.display = 'flex';
+
+            browserUrlText.textContent = finalUrl.replace(/^https?:\/\//, '');
+            frameLoader.classList.remove('hidden');
+
+            // Chargement de l'URL dans l'iframe
+            inAppFrame.src = finalUrl;
+
+            inAppFrame.onload = () => {
+                setTimeout(() => {
+                    frameLoader.classList.add('hidden');
+                }, 400);
+            };
+
+            // Timeout de repli pour masquer le loader
+            setTimeout(() => {
+                frameLoader.classList.add('hidden');
+            }, 2500);
+        }
+
+        function showHub() {
+            stopScanner();
+            browserScreen.style.display = 'none';
+            scannerScreen.style.display = 'none';
+            hubScreen.style.display = 'flex';
+            detectServer();
+        }
+
+        // AUTO-DÉTECTION DU PC SUR LE POINT D'ACCÈS
+        async function detectServer() {
+            detectedName.textContent = "Recherche de l'ordinateur...";
+            detectedIp.textContent = "Test du réseau...";
+            detectedStatusLabel.textContent = "Recherche...";
+            detectedStatusPill.className = "status-pill searching";
+            
+            let probeCandidates = [];
+
+            if (window.location.protocol.startsWith('http') && window.location.host && !window.location.host.includes('localhost') && !window.location.host.includes('127.0.0.1')) {
+                probeCandidates.push(window.location.origin);
+            }
+
+            const lastSaved = localStorage.getItem('pydrop_last_url');
+            if (lastSaved && !probeCandidates.includes(lastSaved)) {
+                probeCandidates.push(lastSaved);
+            }
+
+            probeCandidates.push('http://192.168.137.1:5000');
+            probeCandidates.push('http://192.168.137.1:3000');
+            probeCandidates.push('http://192.168.43.1:5000');
+            probeCandidates.push('http://172.20.10.1:5000');
+
+            let foundData = null;
+            let foundUrl = null;
+
+            async function checkHost(url) {
+                try {
+                    const clean = sanitizeUrl(url);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 1400);
+                    
+                    const res = await fetch(`${clean}/api/info`, { 
+                        signal: controller.signal,
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.app === 'PyDrop') {
+                            return { url: clean, data: data };
+                        }
+                    }
+                } catch (e) {}
+                return null;
+            }
+
+            const results = await Promise.all(probeCandidates.map(checkHost));
+            for (const r of results) {
+                if (r) {
+                    foundData = r.data;
+                    foundUrl = r.url;
+                    break;
+                }
+            }
+
+            if (foundUrl && foundData) {
+                detectedServerUrl = foundUrl;
+                const pcName = foundData.hostname ? foundData.hostname : "Mon Ordinateur";
+                const isHotspot = foundData.is_hotspot || foundUrl.includes('192.168.137.') || foundUrl.includes('192.168.43.');
+                
+                detectedName.textContent = pcName;
+                detectedIp.textContent = `${isHotspot ? 'Point d\'accès : ' : 'IP : '}${foundData.server_ip || foundUrl.replace(/https?:\/\//, '')}`;
+                detectedStatusLabel.textContent = "Connecté";
+                detectedStatusPill.className = "status-pill";
+                btnConnectDetected.disabled = false;
+            } else {
+                if (lastSaved) {
+                    detectedServerUrl = lastSaved;
+                    detectedName.textContent = "Dernier Ordinateur";
+                    detectedIp.textContent = lastSaved.replace(/https?:\/\//, '');
+                    detectedStatusLabel.textContent = "Mémorisé";
+                    detectedStatusPill.className = "status-pill";
+                    btnConnectDetected.disabled = false;
+                } else {
+                    detectedServerUrl = "";
+                    detectedName.textContent = "Ordinateur en attente";
+                    detectedIp.textContent = "Scannez le QR Code ou entrez l'adresse IP";
+                    detectedStatusLabel.textContent = "En attente";
+                    detectedStatusPill.className = "status-pill offline";
+                    btnConnectDetected.disabled = false;
+                }
+            }
+        }
+
+        // GESTION DU SCANNER QR CODE
+        function openScannerScreen() {
+            hubScreen.style.display = 'none';
+            browserScreen.style.display = 'none';
+            scannerScreen.style.display = 'flex';
+            startScanner();
+        }
+
+        async function startScanner() {
+            if (isScannerRunning) return;
+            try {
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("qr-reader");
+                }
+                const config = {
+                    fps: 15,
+                    qrbox: { width: 240, height: 240 },
+                    aspectRatio: 1.0
+                };
+                await html5QrCode.start(
+                    { facingMode: currentFacingMode },
+                    config,
+                    (decodedText) => {
+                        if (decodedText) {
+                            openInAppBrowser(decodedText);
+                        }
+                    },
+                    () => {}
+                );
+                isScannerRunning = true;
+            } catch (err) {
+                console.warn("Erreur caméra:", err);
+                showToast("Veuillez autoriser l'accès à la caméra");
+            }
+        }
+
+        async function stopScanner() {
+            if (html5QrCode && isScannerRunning) {
+                try {
+                    await html5QrCode.stop();
+                    isScannerRunning = false;
+                } catch (e) {}
+            }
+        }
+
+        // INITIALISATION DES ÉVÉNEMENTS
+        window.addEventListener('DOMContentLoaded', () => {
+            renderRecents();
+            detectServer();
+
+            // Clic connexion PC détecté -> Ouvre dans le navigateur intégré
+            btnConnectDetected.addEventListener('click', () => {
+                if (detectedServerUrl) {
+                    openInAppBrowser(detectedServerUrl);
+                } else if (manualIpInput.value) {
+                    openInAppBrowser(manualIpInput.value);
+                } else {
+                    openScannerScreen();
+                }
+            });
+
+            // Ouvrir / Fermer Scanner QR
+            btnOpenScanner.addEventListener('click', openScannerScreen);
+            btnCloseScanner.addEventListener('click', showHub);
+
+            // Contrôles du scanner QR
+            btnToggleCamera.addEventListener('click', async () => {
+                await stopScanner();
+                currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+                startScanner();
+            });
+            btnRestartScan.addEventListener('click', async () => {
+                await stopScanner();
+                startScanner();
+            });
+
+            // Connexion Manuelle IP
+            btnManualConnect.addEventListener('click', () => {
+                if (manualIpInput.value) {
+                    openInAppBrowser(manualIpInput.value);
+                } else {
+                    showToast('Veuillez entrer une adresse IP');
+                }
+            });
+            manualIpInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && manualIpInput.value) {
+                    openInAppBrowser(manualIpInput.value);
+                }
+            });
+
+            // Contrôles du navigateur intégré
+            btnBrowserBack.addEventListener('click', showHub);
+            btnBrowserRefresh.addEventListener('click', () => {
+                if (inAppFrame.src) {
+                    frameLoader.classList.remove('hidden');
+                    inAppFrame.src = inAppFrame.src;
+                }
+            });
+            btnBrowserScan.addEventListener('click', openScannerScreen);
+        });
+    </script>
+</body>
+</html>

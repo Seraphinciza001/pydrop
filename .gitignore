@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+.venv/
+venv/
+
+# PyInstaller / Inno Setup builds
+dist/
+build/
+build_assets/dist*/
+build_assets/work*/
+build_assets/setup_out/
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/keystore.properties
+android/*.jks
+android/app/src/main/assets/www/
+.gradle/
+
+# Binaires volumineux (générés)
+PyDrop - Prêt à installer/
+
+# Fichiers de transferts reçus
+pydrop/received_files/
+pydrop/temp_transfer/
+**/received_files/
+**/temp_transfer/

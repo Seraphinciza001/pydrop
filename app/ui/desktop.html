@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PyDrop</title>
+<link rel="icon" href="/SVG%20Mobile/logo.png">
+<style>
+:root {
+  --bg: #070b16;
+  --bg-2: #0b1222;
+  --panel: #0f1729;
+  --panel-2: #131d33;
+  --line: rgba(148, 163, 184, .12);
+  --line-2: rgba(148, 163, 184, .2);
+  --text: #e8eef9;
+  --muted: #8b9ab3;
+  --dim: #5b6a85;
+  --blue: #38bdf8;
+  --blue-2: #0ea5e9;
+  --blue-deep: #0366d6;
+  --orange: #f68b1e;
+  --green: #22c55e;
+  --red: #ef4444;
+  --radius: 16px;
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font); background: var(--bg); color: var(--text);
+  display: grid; grid-template-columns: 290px 1fr 340px; overflow: hidden;
+  font-size: 14px; user-select: none;
+}
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+input { font: inherit; color: inherit; }
+svg.i { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+/* ---------- Barre latérale ---------- */
+.side {
+  background: linear-gradient(180deg, var(--bg-2), var(--bg));
+  border-right: 1px solid var(--line); padding: 22px 18px; display: flex; flex-direction: column; gap: 18px;
+  overflow-y: auto;
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 4px 4px; }
+.brand img { width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(56,189,248,.35)); }
+.brand b { font-size: 21px; font-weight: 800; letter-spacing: -.4px; }
+.brand b span:first-child { color: var(--blue); }
+.brand b span:last-child { color: var(--orange); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+.label { font-size: 11px; font-weight: 700; letter-spacing: .9px; text-transform: uppercase; color: var(--dim); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+.me { display: flex; align-items: center; gap: 12px; }
+.me .av { width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; background: linear-gradient(135deg, rgba(56,189,248,.2), rgba(246,139,30,.15)); color: var(--blue); border: 1px solid rgba(56,189,248,.25); }
+.me .meta { min-width: 0; flex: 1; }
+.me .name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; gap: 6px; align-items: center; }
+.me .name button { color: var(--dim); padding: 2px; border-radius: 6px; }
+.me .name button:hover { color: var(--blue); background: rgba(56,189,248,.1); }
+.me .sub { color: var(--muted); font-size: 12px; margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(34,197,94,.18); }
+.dot.off { background: var(--red); box-shadow: 0 0 0 3px rgba(239,68,68,.18); }
+.name-input { width: 100%; background: var(--bg); border: 1px solid var(--blue); border-radius: 8px; padding: 4px 8px; outline: none; }
+
+.qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.qr { width: 150px; height: 150px; background: #fff; border-radius: 12px; padding: 8px; display: grid; place-items: center; }
+.qr img { width: 100%; height: 100%; }
+.url-row { display: flex; align-items: center; gap: 6px; width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 7px 8px 7px 10px; }
+.url-row code { flex: 1; font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: var(--blue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: text; }
+.icon-btn { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; color: var(--muted); transition: .15s; }
+.icon-btn:hover { background: rgba(56,189,248,.12); color: var(--blue); }
+.hint { font-size: 12px; color: var(--muted); line-height: 1.45; text-align: center; }
+.path { font-size: 12px; color: var(--muted); word-break: break-all; line-height: 1.4; margin-bottom: 10px; user-select: text; }
+.row { display: flex; gap: 8px; }
+.btn {
+  height: 36px; padding: 0 14px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-weight: 600; font-size: 13px; background: var(--panel-2); border: 1px solid var(--line-2); transition: .15s; white-space: nowrap;
+}
+.btn:hover { border-color: rgba(56,189,248,.5); background: #17233d; }
+.btn.grow { flex: 1; }
+.btn.primary { background: linear-gradient(135deg, var(--blue-2), var(--blue-deep)); border-color: transparent; color: #fff; box-shadow: 0 6px 18px rgba(14,165,233,.3); }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.success { background: linear-gradient(135deg, #22c55e, #16a34a); border-color: transparent; color: #fff; box-shadow: 0 6px 18px rgba(34,197,94,.3); }
+.btn.danger { color: #fca5a5; }
+.btn.danger:hover { border-color: rgba(239,68,68,.5); background: rgba(239,68,68,.08); }
+.switch-row { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.switch-row > span { flex: 1; min-width: 0; }
+.switch-row b { display: block; font-size: 13px; }
+.switch-row small { display: block; color: var(--muted); font-size: 11.5px; line-height: 1.4; margin-top: 3px; }
+.switch-row input { display: none; }
+.switch { width: 38px; height: 22px; border-radius: 99px; background: var(--line-2); position: relative; flex-shrink: 0; transition: .2s; }
+.switch::after { content: ""; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: .2s; }
+.switch-row input:checked + .switch { background: var(--green); }
+.switch-row input:checked + .switch::after { transform: translateX(16px); }
+.field { display: flex; gap: 6px; }
+.select { width: 100%; height: 36px; border-radius: 10px; background: var(--bg); color: var(--text); border: 1px solid var(--line-2); padding: 0 10px; font: inherit; font-size: 13px; outline: none; }
+.select:focus { border-color: var(--blue); }
+.field input { flex: 1; min-width: 0; height: 36px; background: var(--bg); border: 1px solid var(--line-2); border-radius: 10px; padding: 0 10px; outline: none; font-size: 13px; }
+.field input:focus { border-color: var(--blue); }
+
+/* ---------- Radar ---------- */
+.stage { position: relative; display: flex; flex-direction: column; min-width: 0;
+  background: radial-gradient(ellipse at 50% 55%, rgba(14,165,233,.09), transparent 60%), var(--bg); }
+.stage-head { padding: 24px 30px 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.stage-head h1 { font-size: 22px; font-weight: 750; letter-spacing: -.3px; }
+.stage-head p { color: var(--muted); margin-top: 4px; }
+.count { font-size: 12px; font-weight: 700; color: var(--blue); background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.25); border-radius: 999px; padding: 5px 12px; white-space: nowrap; }
+.radar-box { flex: 1; display: grid; place-items: center; min-height: 0; padding: 10px; }
+.radar { position: relative; width: min(100%, calc(100vh - 150px), 640px); aspect-ratio: 1; }
+.ring { position: absolute; border-radius: 50%; border: 1px solid rgba(56,189,248,.12); left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.ring.r1 { width: 36%; height: 36%; }
+.ring.r2 { width: 62%; height: 62%; border-style: dashed; border-color: rgba(56,189,248,.1); }
+.ring.r3 { width: 90%; height: 90%; border-color: rgba(56,189,248,.07); }
+.sweep { position: absolute; inset: 5%; border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(56,189,248,.16), rgba(56,189,248,0) 70deg, transparent 360deg);
+  animation: spin 6s linear infinite; mask: radial-gradient(circle, transparent 15%, #000 16%); -webkit-mask: radial-gradient(circle, transparent 15%, #000 16%); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.wave { position: absolute; left: 50%; top: 50%; width: 16%; height: 16%; border-radius: 50%; border: 2px solid rgba(56,189,248,.5);
+  transform: translate(-50%, -50%) scale(1); animation: wave 3.6s cubic-bezier(.2,.6,.3,1) infinite; opacity: 0; }
+.wave:nth-child(2) { animation-delay: 1.2s; }
+.wave:nth-child(3) { animation-delay: 2.4s; }
+@keyframes wave { 0% { transform: translate(-50%,-50%) scale(1); opacity: .85; } 100% { transform: translate(-50%,-50%) scale(5.6); opacity: 0; } }
+.core { position: absolute; left: 50%; top: 50%; width: 17%; aspect-ratio: 1; transform: translate(-50%, -50%); z-index: 3; }
+.core-in { width: 100%; height: 100%; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 35% 30%, #1b2a4a, #0b1426); border: 2px solid rgba(56,189,248,.55);
+  box-shadow: 0 0 0 8px rgba(56,189,248,.07), 0 0 50px rgba(56,189,248,.35), inset 0 0 22px rgba(56,189,248,.2);
+  animation: beat 1.8s ease-in-out infinite; }
+.core-in img { width: 62%; height: 62%; object-fit: contain; }
+@keyframes beat { 0%,100% { transform: scale(1); } 14% { transform: scale(1.08); } 28% { transform: scale(.98); } 42% { transform: scale(1.05); } 60% { transform: scale(1); } }
+.core-label { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 10px; text-align: center; white-space: nowrap; font-weight: 700; font-size: 13px; }
+.core-label small { display: block; font-weight: 500; color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+.dev { position: absolute; width: 0; height: 0; z-index: 4; transition: left .6s cubic-bezier(.2,.8,.2,1), top .6s cubic-bezier(.2,.8,.2,1); }
+.dev-btn { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 8px; animation: pop .45s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes pop { from { opacity: 0; transform: translate(-50%,-50%) scale(.3); } }
+.dev-ic { position: relative; width: 70px; height: 70px; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 35% 30%, #1d2b48, #0e1830); border: 2px solid rgba(56,189,248,.45); color: var(--blue);
+  box-shadow: 0 10px 30px rgba(0,0,0,.4), 0 0 0 0 rgba(56,189,248,.0); transition: .2s; }
+.dev-ic svg.i { width: 28px; height: 28px; }
+.dev-btn:hover .dev-ic { transform: translateY(-3px) scale(1.06); box-shadow: 0 14px 34px rgba(0,0,0,.45), 0 0 0 6px rgba(56,189,248,.12); }
+.dev.mobile .dev-ic { border-color: rgba(246,139,30,.55); color: var(--orange); }
+.dev.mobile .dev-btn:hover .dev-ic { box-shadow: 0 14px 34px rgba(0,0,0,.45), 0 0 0 6px rgba(246,139,30,.14); }
+.dev.connected .dev-ic { border-color: var(--green); color: #86efac; box-shadow: 0 10px 30px rgba(0,0,0,.4), 0 0 26px rgba(34,197,94,.35); }
+.dev.pending .dev-ic::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; border: 2px dashed var(--orange); animation: spin 2.4s linear infinite; }
+.dev.drop .dev-ic { transform: scale(1.15); box-shadow: 0 0 0 10px rgba(34,197,94,.2), 0 0 40px rgba(34,197,94,.5); }
+.badge { position: absolute; right: -2px; bottom: -2px; width: 22px; height: 22px; border-radius: 50%; background: var(--green); color: #052e12; display: none; place-items: center; border: 3px solid var(--bg); }
+.badge svg.i { width: 12px; height: 12px; stroke-width: 3.5; }
+.dev.connected .badge { display: grid; }
+.dev-name { font-weight: 650; font-size: 13px; max-width: 130px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dev-sub { font-size: 11px; color: var(--muted); margin-top: -6px; white-space: nowrap; }
+.dev.connected .dev-sub { color: #86efac; }
+.dev.pending .dev-sub { color: var(--orange); }
+.dev-tip { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%) translateY(4px); background: #e8eef9; color: #0b1222; font-size: 11px; font-weight: 700; padding: 5px 9px; border-radius: 7px; white-space: nowrap; opacity: 0; pointer-events: none; transition: .15s; }
+.dev-btn:hover .dev-tip { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.empty-radar { position: absolute; left: 50%; top: 79%; transform: translateX(-50%); text-align: center; color: var(--muted); font-size: 13px; width: 70%; line-height: 1.5; }
+.stage-foot { text-align: center; color: var(--dim); font-size: 12px; padding: 0 20px 14px; }
+.signature { margin-top: 8px; font-size: 12px; letter-spacing: .4px; color: var(--muted); }
+.signature b { background: linear-gradient(90deg, var(--blue), var(--orange)); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; }
+
+/* ---------- Activité ---------- */
+.activity { border-left: 1px solid var(--line); background: var(--bg-2); display: flex; flex-direction: column; min-height: 0; }
+.tabs { display: flex; gap: 4px; padding: 18px 16px 12px; }
+.tab { flex: 1; height: 36px; border-radius: 10px; font-weight: 650; font-size: 13px; color: var(--muted); display: flex; align-items: center; justify-content: center; gap: 7px; }
+.tab.on { background: var(--panel-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line-2); }
+.tab .n { font-size: 10px; background: var(--blue-deep); color: #fff; border-radius: 999px; padding: 1px 6px; display: none; }
+.tab .n.show { display: inline-block; }
+.list { flex: 1; overflow-y: auto; padding: 0 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+.item { background: var(--panel); border: 1px solid var(--line); border-radius: 13px; padding: 11px 12px; display: grid; grid-template-columns: 38px 1fr auto; gap: 10px; align-items: center; animation: slide .3s ease both; }
+@keyframes slide { from { opacity: 0; transform: translateY(6px); } }
+.fi { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-size: 10px; font-weight: 800; letter-spacing: .3px; color: #fff; text-transform: uppercase; }
+.it-main { min-width: 0; }
+.it-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.it-sub { font-size: 11px; color: var(--muted); margin-top: 3px; display: flex; gap: 6px; align-items: center; white-space: nowrap; overflow: hidden; }
+.it-sub svg.i { width: 12px; height: 12px; }
+.it-sub .in { color: var(--blue); } .it-sub .out { color: var(--orange); }
+.bar { grid-column: 1 / -1; height: 5px; background: rgba(148,163,184,.12); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--blue-2), var(--blue)); border-radius: 99px; transition: width .2s; }
+.item.out .bar > i { background: linear-gradient(90deg, #f59e0b, var(--orange)); }
+.item.err .it-sub { color: #fca5a5; }
+.it-act { display: flex; gap: 2px; }
+.ok-ic { color: var(--green); }
+.icon-btn.cancel:hover { background: rgba(239,68,68,.12); color: #fca5a5; }
+.item.paused .bar > i { background: repeating-linear-gradient(45deg, #64748b 0 6px, #475569 6px 12px); }
+.item.paused .it-sub { color: #fbbf24; }
+.empty { color: var(--dim); text-align: center; padding: 40px 18px; line-height: 1.6; font-size: 13px; }
+.empty svg.i { width: 34px; height: 34px; margin-bottom: 10px; color: var(--line-2); }
+.list-foot { padding: 10px 16px 16px; border-top: 1px solid var(--line); }
+
+/* ---------- Modales ---------- */
+.overlay { position: fixed; inset: 0; background: rgba(3,6,14,.66); backdrop-filter: blur(6px); display: none; place-items: center; z-index: 50; }
+.overlay.show { display: grid; animation: fade .2s ease; }
+@keyframes fade { from { opacity: 0; } }
+.modal { width: 400px; max-width: calc(100vw - 32px); background: var(--panel); border: 1px solid var(--line-2); border-radius: 22px; padding: 26px; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,.6); animation: up .3s cubic-bezier(.2,1.2,.4,1); position: relative; overflow: hidden; }
+@keyframes up { from { transform: translateY(16px) scale(.97); opacity: 0; } }
+.modal h2 { font-size: 19px; margin: 16px 0 6px; letter-spacing: -.2px; }
+.modal p { color: var(--muted); line-height: 1.5; }
+.req-ic { width: 84px; height: 84px; margin: 4px auto 0; border-radius: 50%; display: grid; place-items: center; color: var(--blue); position: relative;
+  background: radial-gradient(circle at 35% 30%, #1d2b48, #0e1830); border: 2px solid rgba(56,189,248,.5); }
+.req-ic.mobile { color: var(--orange); border-color: rgba(246,139,30,.6); }
+.req-ic svg.i { width: 34px; height: 34px; }
+.req-ic::before, .req-ic::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid currentColor; animation: ping 2s ease-out infinite; opacity: 0; }
+.req-ic::after { animation-delay: 1s; }
+@keyframes ping { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(1.8); opacity: 0; } }
+.modal .row { margin-top: 22px; }
+.timer { position: absolute; left: 0; top: 0; height: 3px; background: linear-gradient(90deg, var(--blue), var(--orange)); }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; margin-top: 10px; }
+
+.send-modal { width: 520px; text-align: left; }
+.send-head { display: flex; align-items: center; gap: 14px; }
+.send-head .req-ic { width: 54px; height: 54px; margin: 0; }
+.send-head .req-ic::before, .send-head .req-ic::after { display: none; }
+.send-head .req-ic svg.i { width: 24px; height: 24px; }
+.send-head h2 { margin: 0; font-size: 18px; }
+.send-head p { font-size: 12px; display: flex; gap: 6px; align-items: center; margin-top: 3px; }
+.send-head .x { margin-left: auto; align-self: flex-start; }
+.drop { margin-top: 20px; border: 2px dashed rgba(56,189,248,.35); border-radius: 18px; padding: 34px 20px; text-align: center; transition: .2s; cursor: pointer; background: rgba(56,189,248,.03); }
+.drop:hover, .drop.over { border-color: var(--blue); background: rgba(56,189,248,.08); }
+.drop .up { width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 12px; display: grid; place-items: center; background: rgba(56,189,248,.12); color: var(--blue); }
+.drop .up svg.i { width: 26px; height: 26px; }
+.drop b { font-size: 15px; display: block; }
+.drop span { color: var(--muted); font-size: 13px; display: block; margin-top: 5px; }
+
+.mirror-state { margin-top: 18px; display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); line-height: 1.45; }
+.mirror-state.ok { color: #86efac; border-color: rgba(34,197,94,.35); }
+.mirror-state.err { color: #fca5a5; border-color: rgba(239,68,68,.35); }
+.mirror-state .spin { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(56,189,248,.25); border-top-color: var(--blue); animation: spin 1s linear infinite; flex-shrink: 0; }
+.mirror-state.ok .spin, .mirror-state.err .spin, .mirror-state.idle .spin { display: none; }
+.pair-box { margin-top: 16px; }
+.audio-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; color: var(--muted); font-size: 13px; font-weight: 600; }
+.seg { display: flex; flex: 1; background: var(--bg); border: 1px solid var(--line-2); border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button { flex: 1; height: 30px; border-radius: 8px; font-size: 12.5px; font-weight: 650; color: var(--muted); }
+.seg button.on { background: var(--panel-2); color: var(--text); box-shadow: inset 0 0 0 1px rgba(56,189,248,.45); }
+.steps { padding-left: 20px; color: var(--text); font-size: 13px; line-height: 1.5; display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.steps small { color: var(--muted); }
+.share-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+.share-row { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); text-align: left; transition: .15s; }
+.share-row:hover { border-color: rgba(56,189,248,.5); }
+.share-row .av { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: rgba(56,189,248,.12); color: var(--blue); flex-shrink: 0; }
+.share-row.mobile .av { background: rgba(246,139,30,.13); color: var(--orange); }
+.share-row b { display: block; font-size: 14px; }
+.share-row small { color: var(--muted); font-size: 12px; }
+.share-row.connected small { color: #86efac; }
+.share-row.pending small { color: var(--orange); }
+.share-row .tick { margin-left: auto; width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--line-2); display: grid; place-items: center; color: transparent; flex-shrink: 0; transition: .15s; }
+.share-row .tick svg.i { width: 14px; height: 14px; }
+.share-row.sel { border-color: rgba(56,189,248,.65); background: rgba(56,189,248,.08); }
+.share-row.sel .tick { background: var(--blue-deep); border-color: var(--blue-deep); color: #fff; }
+.also { margin-top: 14px; }
+.also-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.also-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--muted); font-size: 12.5px; font-weight: 650; transition: .15s; }
+.also-chip svg.i { width: 14px; height: 14px; }
+.also-chip.on { border-color: rgba(56,189,248,.7); color: var(--text); background: rgba(56,189,248,.12); }
+.rec-row { margin-top: 12px; }
+.cam-hint { margin-top: 8px; font-size: 12px; color: var(--muted); line-height: 1.45; }
+.cam-hint b { color: var(--text); }
+.tabs .tab { flex: 1 1 auto; padding: 0 6px; font-size: 12.5px; gap: 5px; }
+.tabs .tab.hist-tab { flex: 0 0 40px; }
+.tabs .tab.hist-tab svg.i { width: 17px; height: 17px; }
+.item.nt { grid-template-columns: 38px 1fr auto; align-items: start; }
+.nt-ic { width: 38px; height: 38px; border-radius: 11px; background: var(--panel-2); display: grid; place-items: center; overflow: hidden; font-weight: 800; color: var(--blue); }
+.nt-ic img { width: 100%; height: 100%; object-fit: cover; }
+.nt-app { font-size: 11px; color: var(--muted); display: flex; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nt-title { font-weight: 700; font-size: 13px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nt-text, .clip-text { font-size: 12.5px; color: #cbd5e1; margin-top: 3px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; word-break: break-word; }
+.item.nt .it-act, .item.clip .it-act { flex-direction: column; }
+.item.clip { grid-template-columns: 38px 1fr auto; align-items: start; }
+.clip-ic { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; background: rgba(168,85,247,.14); color: #c084fc; }
+.item.clip.out .clip-ic { background: rgba(246,139,30,.13); color: var(--orange); }
+.list-foot .row { display: flex; gap: 8px; }
+.toasts { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 80; align-items: center; pointer-events: none; }
+.toast { pointer-events: auto; background: #e8eef9; color: #0b1222; border-radius: 12px; padding: 10px 14px; font-weight: 600; font-size: 13px; display: flex; gap: 10px; align-items: center; box-shadow: 0 12px 30px rgba(0,0,0,.45); animation: up .25s ease; }
+.toast.error { background: #fee2e2; color: #7f1d1d; }
+.toast.success { background: #dcfce7; color: #14532d; }
+.toast button { font-weight: 700; color: var(--blue-deep); padding: 2px 6px; border-radius: 6px; }
+.toast button:hover { background: rgba(3,102,214,.1); }
+
+.offline { position: fixed; inset: 0; background: var(--bg); display: none; place-items: center; z-index: 100; text-align: center; color: var(--muted); }
+.offline.show { display: grid; }
+
+::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: rgba(148,163,184,.18); border-radius: 8px; }
+
+[hidden] { display: none !important; }
+@media (max-width: 1080px) {
+  body { grid-template-columns: 250px 1fr 290px; }
+  .qr { width: 130px; height: 130px; }
+}
+@media (max-width: 860px) {
+  body { grid-template-columns: 1fr; grid-template-rows: auto auto auto; overflow-y: auto; }
+  .stage { order: -1; min-height: 100vh; }
+  .radar { width: min(100%, calc(100vh - 150px)); }
+  .side { border-right: 0; border-top: 1px solid var(--line); }
+  .activity { border-left: 0; min-height: 60vh; }
+}
+</style>
+</head>
+<body>
+<script src="splash.js"></script>
+
+<aside class="side">
+  <div class="brand">
+    <img src="/SVG%20Mobile/logo.png" alt="">
+    <b><span>Py</span><span>Drop</span></b>
+  </div>
+
+  <div class="card">
+    <div class="label">Cet ordinateur</div>
+    <div class="me">
+      <div class="av" id="meIcon"></div>
+      <div class="meta">
+        <div class="name" id="meNameBox"><span id="meName">…</span><button id="renameBtn" title="Renommer"></button></div>
+        <div class="sub"><span class="dot" id="netDot"></span><span id="meSub">Visible sur le réseau</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Connecter un téléphone</div>
+    <div class="qr-wrap">
+      <div class="qr"><img id="qrImg" alt="QR code"></div>
+      <div class="url-row"><code id="phoneUrl">…</code><button class="icon-btn" id="copyUrl" title="Copier"></button></div>
+      <div class="hint">Scannez le QR code avec l'appareil photo du téléphone (même Wi-Fi), puis acceptez la connexion.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Dossier de réception</div>
+    <div class="path" id="dlPath">…</div>
+    <div class="row">
+      <button class="btn grow" id="openFolder"></button>
+      <button class="btn grow" id="chooseFolder"></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <label class="switch-row">
+      <span><b>Explorateur à distance</b><small>Les appareils connectés peuvent parcourir et télécharger vos fichiers</small></span>
+      <input type="checkbox" id="allowBrowse"><i class="switch"></i>
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="label">Vidéos en ligne</div>
+    <div class="path" style="margin-bottom:8px">Connexion YouTube du navigateur — si YouTube bloque les téléchargements (« vérification anti-robot »)</div>
+    <select class="select" id="videoCookies">
+      <option value="">Aucune</option>
+      <option value="firefox">Firefox (conseillé)</option>
+      <option value="edge">Microsoft Edge</option>
+      <option value="chrome">Google Chrome</option>
+      <option value="brave">Brave</option>
+    </select>
+  </div>
+
+  <div class="card" id="shellCard" hidden>
+    <label class="switch-row">
+      <span><b>Menu « Envoyer avec PyDrop »</b><small>Clic droit sur un fichier ou un dossier dans l'Explorateur Windows</small></span>
+      <input type="checkbox" id="shellToggle"><i class="switch"></i>
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="label">Avec le téléphone</div>
+    <label class="switch-row">
+      <span><b>Presse-papiers automatique</b><small>Chaque texte copié ici (Ctrl+C) part vers les appareils connectés</small></span>
+      <input type="checkbox" id="clipAuto"><i class="switch"></i>
+    </label>
+    <label class="switch-row" style="margin-top:14px">
+      <span><b>Télécommande</b><small>Un téléphone connecté peut piloter la souris, le son et les présentations de ce PC</small></span>
+      <input type="checkbox" id="allowRemote"><i class="switch"></i>
+    </label>
+    <label class="switch-row" style="margin-top:14px">
+      <span><b>Notifications en pop-up</b><small>Les messages reçus sur le téléphone (WhatsApp, SMS…) s'affichent aussi dans Windows</small></span>
+      <input type="checkbox" id="notifToast"><i class="switch"></i>
+    </label>
+    <div id="mutedBox" class="path" style="margin-top:10px" hidden></div>
+  </div>
+
+  <div class="card">
+    <div class="label">Ajouter par adresse IP</div>
+    <div class="field">
+      <input id="ipInput" placeholder="192.168.1.20" spellcheck="false">
+      <button class="btn" id="addIp"></button>
+    </div>
+  </div>
+</aside>
+
+<main class="stage">
+  <div class="stage-head">
+    <div>
+      <h1>Appareils à proximité</h1>
+      <p>Cliquez sur un appareil pour lui demander la connexion.</p>
+    </div>
+    <span class="count" id="count">Recherche…</span>
+  </div>
+  <div class="radar-box">
+    <div class="radar" id="radar">
+      <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+      <div class="sweep"></div>
+      <div class="waves"><div class="wave"></div><div class="wave"></div><div class="wave"></div></div>
+      <div class="core">
+        <div class="core-in"><img src="/SVG%20Mobile/logo.png" alt=""></div>
+        <div class="core-label"><span id="coreName">Moi</span><small>Vous</small></div>
+      </div>
+      <div class="empty-radar" id="emptyRadar">Recherche d'appareils PyDrop sur le réseau…<br>Ouvrez PyDrop sur un autre ordinateur ou scannez le QR code avec un téléphone.</div>
+    </div>
+  </div>
+  <div class="stage-foot">Astuce : glissez des fichiers directement sur un appareil connecté pour les envoyer.<div class="signature">By <b>Seraphin</b></div></div>
+</main>
+
+<aside class="activity">
+  <div class="tabs">
+    <button class="tab on" data-tab="live">Transferts <span class="n" id="liveN"></span></button>
+    <button class="tab" data-tab="notif">Notifs <span class="n" id="notifN"></span></button>
+    <button class="tab" data-tab="clip">Textes <span class="n" id="clipN"></span></button>
+    <button class="tab hist-tab" data-tab="hist" title="Historique" id="histTab"></button>
+  </div>
+  <div class="list" id="liveList"></div>
+  <div class="list" id="notifList" hidden></div>
+  <div class="list-foot" id="notifFoot" hidden><button class="btn grow" style="width:100%" id="clearNotif"></button></div>
+  <div class="list" id="clipList" hidden></div>
+  <div class="list-foot" id="clipFoot" hidden><button class="btn primary grow" style="width:100%" id="clipAll"></button></div>
+  <div class="list" id="histList" hidden></div>
+  <div class="list-foot" id="histFoot" hidden><button class="btn grow" style="width:100%" id="clearHist"></button></div>
+</aside>
+
+<!-- Demande entrante -->
+<div class="overlay" id="reqOverlay">
+  <div class="modal">
+    <div class="timer" id="reqTimer"></div>
+    <div class="req-ic" id="reqIcon"></div>
+    <h2 id="reqTitle"></h2>
+    <p id="reqText">souhaite se connecter à cet ordinateur pour échanger des fichiers.</p>
+    <span class="chip" id="reqChip"></span>
+    <div class="row">
+      <button class="btn grow danger" id="reqNo">Refuser</button>
+      <button class="btn grow success" id="reqYes">Accepter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Envoi -->
+<div class="overlay" id="sendOverlay">
+  <div class="modal send-modal">
+    <div class="send-head">
+      <div class="req-ic" id="sendIcon"></div>
+      <div>
+        <h2 id="sendTitle"></h2>
+        <p id="sendSub"></p>
+      </div>
+      <button class="icon-btn x" id="sendClose"></button>
+    </div>
+    <div class="drop" id="drop">
+      <div class="up"></div>
+      <b>Déposez vos fichiers ici</b>
+      <span>ou cliquez pour les choisir</span>
+    </div>
+    <input type="file" id="filePick" multiple hidden>
+    <div class="also" id="alsoBox" hidden>
+      <div class="label" style="margin:0 0 8px">Envoyer aussi à</div>
+      <div class="also-chips" id="alsoChips"></div>
+    </div>
+    <div class="row">
+      <button class="btn danger" id="disconnectBtn"></button>
+      <button class="btn" id="mirrorBtn" hidden></button>
+      <button class="btn" id="clipBtn" title="Envoyer le texte copié sur ce PC"></button>
+      <span style="flex:1"></span>
+      <button class="btn" id="folderBtn"></button>
+      <button class="btn primary" id="pickBtn"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Choix de l'appareil (menu Windows, dossier déposé) -->
+<div class="overlay" id="shareOverlay">
+  <div class="modal send-modal">
+    <div class="send-head">
+      <div><h2 id="shareTitle"></h2><p id="shareNames"></p></div>
+      <button class="icon-btn x" id="shareClose"></button>
+    </div>
+    <div class="label" style="margin-top:20px">Choisissez un ou plusieurs appareils</div>
+    <div class="share-list" id="shareList"></div>
+    <div class="row" style="margin-top:14px"><span style="flex:1"></span><button class="btn primary" id="shareGo" disabled></button></div>
+  </div>
+</div>
+
+<!-- Voir et contrôler le téléphone (scrcpy) -->
+<div class="overlay" id="mirrorOverlay">
+  <div class="modal send-modal">
+    <div class="send-head">
+      <div class="req-ic mobile" id="mirrorIcon"></div>
+      <div><h2 id="mirrorTitle"></h2><p id="mirrorSub">Voir et contrôler l'écran</p></div>
+      <button class="icon-btn x" id="mirrorClose"></button>
+    </div>
+    <div class="mirror-state" id="mirrorState"><span class="spin"></span><span id="mirrorText">Préparation…</span></div>
+    <div class="audio-row">
+      <span>Voir</span>
+      <div class="seg" id="mirrorMode">
+        <button data-v="screen">Écran</button><button data-v="front">Caméra avant</button><button data-v="back">Caméra arrière</button>
+      </div>
+    </div>
+    <div class="cam-hint" id="camHint" hidden>La caméra du téléphone s'affiche dans une fenêtre (Android 12 ou plus). Pour vous en servir de <b>webcam</b> dans Zoom, Teams ou Meet : dans <b>OBS Studio</b>, ajoutez une « Capture de fenêtre » de cette fenêtre puis cliquez sur <b>Démarrer la caméra virtuelle</b>.</div>
+    <div class="audio-row" id="audioRow">
+      <span>Son</span>
+      <div class="seg" id="mirrorAudio">
+        <button data-v="phone">Téléphone</button><button data-v="pc">Ordinateur</button><button data-v="both">Les deux</button>
+      </div>
+    </div>
+    <label class="switch-row rec-row">
+      <span><b>Enregistrer en vidéo</b><small>Le film (.mp4) est gardé dans le dossier de réception à la fermeture de la fenêtre</small></span>
+      <input type="checkbox" id="mirrorRec"><i class="switch"></i>
+    </label>
+    <div class="pair-box" id="pairBox" hidden>
+      <div class="label" style="margin:0 0 6px">Avec un câble USB — conseillé, marche partout</div>
+      <ol class="steps">
+        <li>Sur le téléphone : <b>Options pour les développeurs</b> → activez <b>Débogage USB</b>.<br><small>Pas visibles ? <b>À propos du téléphone</b> → touchez 7 fois <b>Numéro de build</b>.</small></li>
+        <li>Branchez le câble, acceptez <b>Autoriser le débogage USB</b> (cochez « Toujours »), puis <b>Réessayer</b>.</li>
+        <li>Ensuite vous pouvez <b>débrancher</b> : l'affichage passe en sans-fil, même en partage de connexion (jusqu'au redémarrage du téléphone).</li>
+      </ol>
+      <div class="label" style="margin:10px 0 6px">Ou sans câble — le téléphone doit être sur un Wi-Fi</div>
+      <ol class="steps">
+        <li>Activez <b>Débogage sans fil</b> et ouvrez-le.<br><small>Impossible si le téléphone partage sa connexion : Android le coupe aussitôt.</small></li>
+        <li>Touchez <b>Associer l'appareil avec un code d'association</b>, puis tapez ici le code à 6 chiffres.</li>
+      </ol>
+      <div class="field">
+        <input id="pairCode" placeholder="Code à 6 chiffres" inputmode="numeric" maxlength="7" autocomplete="off">
+        <input id="pairPort" placeholder="Port (auto)" inputmode="numeric" maxlength="5" style="max-width:110px" autocomplete="off">
+        <button class="btn primary" id="pairGo">Associer</button>
+      </div>
+      <p class="hint" style="margin-top:8px;text-align:left">L'association ne se fait qu'une fois. Ensuite, il suffit que le débogage sans fil soit activé.</p>
+    </div>
+    <div class="row" style="margin-top:18px">
+      <button class="btn" id="mirrorRetry" hidden>Réessayer</button>
+      <span style="flex:1"></span>
+      <button class="btn danger" id="mirrorStop" hidden>Arrêter l'affichage</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+<div class="offline" id="offline"><div><b style="color:var(--text);font-size:17px">Connexion au moteur PyDrop…</b><br><br>Si ce message persiste, relancez l'application.</div></div>
+
+<script src="/envelope.js"></script>
+<script>
+const ICONS = {
+  monitor: '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+  phone: '<rect x="5" y="2" width="14" height="20" rx="2.5"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+  folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+  upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+  check: '<polyline points="20 6 9 17 4 12"/>',
+  x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>',
+  plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+  down: '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>',
+  up: '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>',
+  open: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+  trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  video: '<rect x="2" y="5" width="15" height="14" rx="3"/><polygon points="22 8 17 12 22 16 22 8"/>',
+  pause: '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+  clip: '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/>',
+  bell: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  belloff: '<path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/>',
+  reply: '<polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/>',
+  send: '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  wifi: '<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>',
+};
+const ic = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24">${ICONS[n]}</svg>`;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function fmtSize(b) {
+  if (!b) return '0 o';
+  const u = ['o', 'Ko', 'Mo', 'Go', 'To']; let i = 0;
+  while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+  return `${b.toFixed(b < 10 && i ? 1 : 0)} ${u[i]}`;
+}
+const FT = [
+  [/^(jpe?g|png|gif|webp|bmp|svg|heic|ico)$/, '#a855f7'], [/^(mp4|mkv|mov|avi|webm)$/, '#ef4444'],
+  [/^(mp3|wav|flac|ogg|m4a|aac)$/, '#ec4899'], [/^pdf$/, '#dc2626'], [/^(docx?|odt|rtf|txt|md)$/, '#2563eb'],
+  [/^(xlsx?|csv|ods)$/, '#16a34a'], [/^(pptx?|odp)$/, '#ea580c'], [/^(zip|rar|7z|tar|gz)$/, '#ca8a04'],
+  [/^(apk|exe|msi|dmg)$/, '#0d9488'], [/^(py|js|ts|html|css|json|c|cpp|java|go|rs|php|sql|sh)$/, '#0ea5e9'],
+];
+function fileBadge(name, isDir, kind) {
+  if (kind === 'fetch') return `<div class="fi" style="background:linear-gradient(135deg,#ef4444,#f68b1e)">${ic('video')}</div>`;
+  if (isDir) return `<div class="fi" style="background:#f59e0b">${ic('folder')}</div>`;
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const col = (FT.find(([r]) => r.test(ext)) || [0, '#475569'])[1];
+  return `<div class="fi" style="background:${col}">${esc(ext.slice(0, 4) || 'fic')}</div>`;
+}
+function timeAgo(ts) {
+  const d = (Date.now() / 1000 - ts);
+  if (d < 60) return "à l'instant";
+  if (d < 3600) return `il y a ${Math.floor(d / 60)} min`;
+  if (d < 86400) return `il y a ${Math.floor(d / 3600)} h`;
+  return new Date(ts * 1000).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+// ---------- icônes statiques ----------
+$('#renameBtn').innerHTML = ic('edit');
+$('#copyUrl').innerHTML = ic('copy');
+$('#openFolder').innerHTML = ic('folder') + 'Ouvrir';
+$('#chooseFolder').innerHTML = ic('edit') + 'Changer';
+$('#addIp').innerHTML = ic('plus');
+$('#sendClose').innerHTML = ic('x');
+$('#drop .up').innerHTML = ic('upload');
+$('#disconnectBtn').innerHTML = ic('logout') + 'Déconnecter';
+$('#pickBtn').innerHTML = ic('upload') + 'Choisir des fichiers';
+$('#folderBtn').innerHTML = ic('folder') + 'Envoyer un dossier';
+$('#shareClose').innerHTML = ic('x');
+$('#clearHist').innerHTML = ic('trash') + "Effacer l'historique";
+$('#meIcon').innerHTML = ic('monitor');
+
+// ---------- état ----------
+let ws, me = {}, devices = [], history = [];
+const incoming = [];           // file d'attente des demandes reçues
+const transfers = new Map();   // tid -> transfert
+const slots = new Map();       // id appareil -> position sur le radar
+let sendTarget = null;
+
+function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+
+function connectWS() {
+  ws = new WebSocket(`ws://${location.host}/ws/ui`);
+  ws.onopen = () => { $('#offline').classList.remove('show'); window.PySplash?.step('Connexion au réseau…'); };
+  ws.onclose = () => { $('#offline').classList.add('show'); setTimeout(connectWS, 1500); };
+  ws.onmessage = e => handle(JSON.parse(e.data));
+}
+
+function handle(m) {
+  switch (m.type) {
+    case 'init':
+      window.PySplash?.step(m.devices.length ? `${m.devices.length} appareil${m.devices.length > 1 ? 's' : ''} à proximité` : 'Recherche des appareils…');
+      window.PySplash?.done(1600);
+      me = m.me; devices = m.devices; history = m.history || [];
+      renderMe(); setDl(m.download_dir); setUrls(m.urls); renderDevices(); renderHistory();
+      $('#allowBrowse').checked = !!m.allow_browse;
+      $('#shellCard').hidden = !m.shell_available;
+      $('#shellToggle').checked = !!m.shell_integration;
+      $('#videoCookies').value = m.video_cookies || '';
+      setMirrorAudio(m.mirror_audio || 'phone');
+      $('#clipAuto').checked = !!m.clip_auto;
+      $('#allowRemote').checked = !!m.allow_remote;
+      $('#notifToast').checked = !!m.notif_toast;
+      notifs = m.notifs || []; clips = m.clips || []; muted = m.notif_muted || [];
+      renderNotifs(); renderClips(); renderMuted();
+      nativeWindow = !!m.native_window;
+      if (m.share && m.share.length) openShare(m.share);
+      incoming.length = 0; m.incoming.forEach(r => incoming.push(r)); showNextRequest();
+      break;
+    case 'me': me = m.me; renderMe(); break;
+    case 'urls': setUrls(m.urls); break;
+    case 'devices': {
+      const before = new Map(devices.map(d => [d.id, d]));
+      devices = m.devices; renderDevices(); renderShare(); renderAlso();
+      if (sendTarget) {
+        const d = devices.find(x => x.id === sendTarget.id);
+        if (!d || !d.connected) { closeSend(); if (!d) toast(`${sendTarget.name} n'est plus visible`, 'error'); }
+        else sendTarget = d;
+      }
+      devices.forEach(d => { if (!before.has(d.id) && d.type === 'mobile') toast(`${d.name} a rejoint le réseau`); });
+      break;
+    }
+    case 'incoming': incoming.push({ req_id: m.req_id, from: m.from }); showNextRequest(); break;
+    case 'incoming_cancel': {
+      const i = incoming.findIndex(r => r.req_id === m.req_id);
+      if (i === 0 && curReq) { hideRequest(); toast('Demande annulée par l\'appareil'); }
+      else if (i > 0) incoming.splice(i, 1);
+      break;
+    }
+    case 'response':
+      if (m.accepted) toast(`${m.peer.name} a accepté la connexion`, 'success');
+      else toast(`${m.peer.name} a refusé la connexion`, 'error');
+      if (share && share.waiting === m.peer.id && !m.accepted) { share.waiting = null; renderShare(); }
+      break;
+    case 'peer_disconnected': toast(`${m.peer.name} s'est déconnecté`); break;
+    case 'error': toast(m.message, 'error'); break;
+    case 'video_cookies': $('#videoCookies').value = m.value; toast(m.value ? `Vidéos : connexion YouTube de ${$('#videoCookies').selectedOptions[0].text}` : 'Vidéos : sans connexion YouTube'); break;
+    case 'clip_in': {
+      clips.unshift(m.item); clips = clips.slice(0, 20); renderClips();
+      if (currentTab !== 'clip') bump('#clipN');
+      toast(m.copied ? `Texte de ${m.item.from} copié — Ctrl+V pour le coller` : `Texte reçu de ${m.item.from}`, 'success');
+      break;
+    }
+    case 'clip_out': clips.unshift(m.item); clips = clips.slice(0, 20); renderClips(); toast(`Texte envoyé à ${m.item.to}`, 'success'); break;
+    case 'clip_auto': $('#clipAuto').checked = m.value; toast(m.value ? 'Presse-papiers automatique activé' : 'Presse-papiers automatique désactivé'); break;
+    case 'allow_remote': $('#allowRemote').checked = m.value; toast(m.value ? 'Télécommande autorisée' : 'Télécommande désactivée'); break;
+    case 'remote_active': toast(`${m.name} pilote ce PC (télécommande)`); break;
+    case 'notif_toast': $('#notifToast').checked = m.value; break;
+    case 'notif': {
+      notifs.unshift(m.item); notifs = notifs.slice(0, 50); renderNotifs();
+      if (currentTab !== 'notif') bump('#notifN');
+      break;
+    }
+    case 'notif_reply_sent': {
+      const n = notifs.find(item => item.id === m.id);
+      if (n) { n.replySent = m.text; renderNotifs(); }
+      toast('Réponse transmise au téléphone', 'success');
+      break;
+    }
+    case 'notif_muted': muted = m.value; notifs = m.notifs; renderNotifs(); renderMuted(); break;
+    case 'recorded':
+      history.unshift(m.item); renderHistory();
+      toastAction(`Vidéo enregistrée : ${m.item.name}`, 'Ouvrir', () => send({ type: 'open_file', path: m.item.path }));
+      break;
+    case 'mirror': {
+      if (!mirrorDev || mirrorDev.id !== m.id) break;
+      if (m.mode) setMirrorMode(m.mode);
+      if (m.record != null) $('#mirrorRec').checked = !!m.record;
+      setMirror(m.state, m.message, m);
+      if (m.state === 'running') toast(m.message, 'success');
+      break;
+    }
+    case 'mirror_audio': {
+      setMirrorAudio(m.value);
+      const label = { phone: 'sur le téléphone', pc: 'sur l\'ordinateur', both: 'sur les deux' }[m.value];
+      const running = !$('#mirrorStop').hidden;
+      toast(running ? `Son ${label} : relance de l'affichage…` : `Son ${label}`);
+      // Le réglage s'applique au lancement : on relance si l'écran est déjà affiché
+      if (running && mirrorDev) {
+        send({ type: 'mirror_stop', id: mirrorDev.id });
+        setTimeout(() => send({ type: 'mirror_start', id: mirrorDev.id, ...mirrorOpts() }), 1500);
+      }
+      break;
+    }
+    case 'mirror_open': {
+      const d = devices.find(x => x.id === m.id);
+      if (d) openMirror(d);
+      if (m.mode) setMirrorMode(m.mode);
+      if (m.record != null) $('#mirrorRec').checked = !!m.record;
+      break;
+    }
+    case 'shell_integration': $('#shellToggle').checked = m.value; toast(m.value ? 'Menu Windows activé' : 'Menu Windows retiré'); break;
+    case 'share': openShare(m.items); break;
+    case 'picked': {
+      const ids = pickTargets && pickTargets.length ? pickTargets : [m.id];
+      pickTargets = null;
+      const list = ids.map(id => devices.find(x => x.id === id)).filter(d => d && d.connected);
+      list.forEach(d => sendPaths(d, m.items));
+      if (list.length) closeSend();
+      break;
+    }
+    case 'dropped_paths': {
+      const drop = lastDrop && Date.now() - lastDrop.t < 3000 ? lastDrop : null;
+      lastDrop = null;
+      if (drop) clearTimeout(drop.timer);
+      const list = drop ? drop.ids.map(id => devices.find(x => x.id === id)).filter(d => d && d.connected) : [];
+      if (list.length) list.forEach(d => sendPaths(d, m.items));
+      else if (m.items.some(i => i.is_dir)) openShare(m.items);
+      break;
+    }
+    case 'out': {
+      const t = transfers.get(m.tid);
+      if (t && t.status === 'cancelled') break;
+      const fresh = !t || t.status !== 'active' || t.phase !== m.phase;
+      upsert(m.tid, { tid: m.tid, dir: 'out', name: m.name, size: m.size, done: m.done, status: m.status, phase: m.phase, note: m.note, error: m.error,
+        peer: m.peer, peerType: m.peerType, isDir: m.isDir, kind: m.kind, ...(fresh ? { t0: Date.now(), base: m.done, speed: 0 } : {}) });
+      // Une vidéo téléchargée pour un téléphone : l'envoi qui suit apparaît dans sa propre ligne
+      if (m.status === 'done' && m.kind !== 'fetch') logSent(transfers.get(m.tid));
+      break;
+    }
+    case 'rx_unpack': upsert(m.tid, { phase: 'Décompression…', done: transfers.get(m.tid)?.size || 0 }); break;
+    case 'allow_browse': $('#allowBrowse').checked = m.value; toast(m.value ? 'Explorateur à distance activé' : 'Explorateur à distance désactivé'); break;
+    case 'browse_download': toast(`${m.peer} télécharge « ${m.name} » depuis votre PC`); break;
+    case 'download_dir': setDl(m.path); toast('Dossier de réception modifié', 'success'); break;
+    case 'rx_start':
+      upsert(m.tid, { tid: m.tid, dir: 'in', name: m.name, isDir: m.is_dir, size: m.size, done: m.received || 0, base: m.received || 0, peer: m.from.name, peerType: m.from.type, status: 'active', t0: Date.now(), speed: 0, phase: '' });
+      if (!m.received) envelopeIn(m.from.id, m.name, m.is_dir);
+      if (m.received) toast(`Reprise de ${m.name} à ${Math.floor(m.received / m.size * 100)} %`);
+      break;
+    case 'rx_progress': upsert(m.tid, { done: m.received, status: 'active' }); break;
+    case 'rx_paused': upsert(m.tid, { done: m.received, status: 'paused' }); break;
+    case 'rx_cancelled': upsert(m.tid, { status: 'cancelled' }); break;
+    case 'tx_cancelled': if (transfers.has(m.tid)) upsert(m.tid, { status: 'cancelled' }); break;
+    case 'browse_progress': {
+      // Un appareil connecté prend un fichier via l'explorateur : on montre ce qu'il télécharge
+      const t = transfers.get(m.tid);
+      if (t && t.status === 'cancelled') break;
+      const base = { tid: m.tid, dir: 'out', name: m.name, size: m.size, peer: m.peer, peerType: m.peer_type };
+      if (!t) PyEnvelope.send(coreEl(), deviceEl(m.peer_id), { label: PyEnvelope.label(m.name) });
+      if (m.state === 'done') { upsert(m.tid, { ...base, status: 'done', done: m.size }); logSent(transfers.get(m.tid)); }
+      else if (m.state === 'paused') upsert(m.tid, { ...base, status: 'paused', done: m.sent, note: `reprendra quand ${m.peer} se reconnecte` });
+      else upsert(m.tid, { ...base, done: m.sent, status: 'active', phase: `${m.peer} prend ce fichier…`, note: '',
+        ...(!t || t.status !== 'active' ? { t0: Date.now(), base: m.sent, speed: 0 } : {}) });
+      break;
+    }
+    case 'rx_done':
+      upsert(m.tid, { done: m.item.size, size: m.item.size, status: 'done', path: m.item.path, name: m.item.name, isDir: m.item.is_dir, phase: '' });
+      history.unshift(m.item); renderHistory();
+      // Un programme reçu (.exe, .msi…) s'installe directement, intact, depuis PyDrop
+      if (isInstaller(m.item.name)) toastAction(`Reçu : ${m.item.name}`, 'Installer', () => send({ type: 'open_file', path: m.item.path }), 'success');
+      else toast(`Reçu : ${m.item.name}`, 'success');
+      break;
+    case 'rx_error': upsert(m.tid, { status: 'error', error: 'Transfert interrompu' }); break;
+    case 'tx_progress': {
+      const t = transfers.get(m.tid);
+      if (!t || t.status === 'cancelled') break;
+      if (m.paused) upsert(m.tid, { done: m.sent, status: 'paused' });
+      else upsert(m.tid, { done: m.sent, phase: 'Le téléphone télécharge…', status: 'active', ...(t.status !== 'active' || !t.phase?.startsWith('Le t') ? { t0: Date.now(), base: m.sent, speed: 0 } : {}) });
+      break;
+    }
+    case 'tx_done': {
+      const t = transfers.get(m.tid);
+      upsert(m.tid, { status: 'done', done: t ? t.size : 0 });
+      if (t) logSent(t);
+      break;
+    }
+  }
+}
+
+// ---------- moi ----------
+function renderMe() {
+  $('#meName').textContent = me.name; $('#coreName').textContent = me.name;
+  if ($('#netDot') && $('#netDot').classList.contains('off')) {
+    $('#meSub').textContent = 'Aucun réseau détecté';
+  } else {
+    $('#meSub').textContent = `${me.os} · Visible sur le réseau`;
+  }
+}
+function startRename() {
+  const box = $('#meNameBox');
+  box.innerHTML = `<input class="name-input" maxlength="40" value="${esc(me.name)}">`;
+  const inp = box.querySelector('input'); inp.focus(); inp.select();
+  let finished = false;
+  const done = save => {
+    if (finished) return; finished = true;
+    const v = inp.value.trim();
+    box.innerHTML = `<span id="meName"></span><button id="renameBtn" title="Renommer">${ic('edit')}</button>`;
+    $('#renameBtn').onclick = startRename;
+    if (save && v && v !== me.name) send({ type: 'rename', name: v });
+    renderMe();
+  };
+  inp.onkeydown = e => { if (e.key === 'Enter') done(true); if (e.key === 'Escape') done(false); };
+  inp.onblur = () => done(true);
+}
+$('#renameBtn').onclick = startRename;
+function setDl(p) { $('#dlPath').textContent = p; }
+function setUrls(urls) {
+  urls = urls || [];
+  const u = urls[0] || `http://${location.host}/`;
+  $('#phoneUrl').textContent = u.replace(/^http:\/\//, '').replace(/\/$/, '');
+  $('#phoneUrl').title = urls.join('\n');
+  $('#qrImg').src = `/api/qr.svg?url=${encodeURIComponent(u)}&_t=${Date.now()}`;
+  $('#netDot').classList.toggle('off', !urls.length);
+  if (!urls.length) {
+    $('#meSub').textContent = 'Aucun réseau détecté';
+  } else {
+    renderMe();
+  }
+  $('#copyUrl').onclick = () => { navigator.clipboard?.writeText(u); toast('Adresse copiée'); };
+}
+$('#openFolder').onclick = () => send({ type: 'open_folder' });
+$('#allowBrowse').onchange = e => send({ type: 'allow_browse', value: e.target.checked });
+$('#chooseFolder').onclick = () => send({ type: 'choose_folder' });
+$('#addIp').onclick = () => { const v = $('#ipInput').value.trim(); if (v) { send({ type: 'add_peer', address: v }); $('#ipInput').value = ''; toast('Recherche de ' + v + '…'); } };
+$('#ipInput').onkeydown = e => { if (e.key === 'Enter') $('#addIp').click(); };
+
+// ---------- radar ----------
+const SLOT_POS = (() => {
+  const out = [];
+  for (let k = 0; k < 6; k++) out.push({ r: .31, a: -90 + 60 * k + 30 });
+  for (let k = 0; k < 8; k++) out.push({ r: .45, a: -90 + 45 * k });
+  return out;
+})();
+function slotFor(id) {
+  if (slots.has(id)) return slots.get(id);
+  const used = new Set(slots.values());
+  let s = 0; while (used.has(s) && s < SLOT_POS.length) s++;
+  slots.set(id, s); return s;
+}
+function renderDevices() {
+  const radar = $('#radar');
+  const ids = new Set(devices.map(d => d.id));
+  for (const id of [...slots.keys()]) if (!ids.has(id)) slots.delete(id);
+  radar.querySelectorAll('.dev').forEach(el => { if (!ids.has(el.dataset.id)) el.remove(); });
+
+  devices.forEach(d => {
+    const s = slotFor(d.id);
+    const p = SLOT_POS[s % SLOT_POS.length];
+    const ring = s >= SLOT_POS.length ? p.r - .07 : p.r;
+    const x = 50 + ring * 100 * Math.cos(p.a * Math.PI / 180);
+    const y = 50 + ring * 100 * Math.sin(p.a * Math.PI / 180);
+    let el = radar.querySelector(`.dev[data-id="${d.id}"]`);
+    if (!el) {
+      el = document.createElement('div'); el.className = 'dev'; el.dataset.id = d.id;
+      el.innerHTML = `<button class="dev-btn"><span class="dev-tip"></span><span class="dev-ic"><span class="badge">${ic('check')}</span></span><span class="dev-name"></span><span class="dev-sub"></span></button>`;
+      el.querySelector('.dev-btn').onclick = () => onDeviceClick(el.dataset.id);
+      setupDeviceDrop(el);
+      radar.appendChild(el);
+    }
+    el.style.left = x + '%'; el.style.top = y + '%';
+    el.className = `dev ${d.type}${d.connected ? ' connected' : ''}${d.pending ? ' pending' : ''}`;
+    const icEl = el.querySelector('.dev-ic');
+    icEl.querySelector('svg')?.remove();
+    icEl.insertAdjacentHTML('afterbegin', ic(d.type === 'mobile' ? 'phone' : 'monitor'));
+    el.querySelector('.dev-name').textContent = d.name;
+    el.querySelector('.dev-sub').textContent = d.connected ? 'Connecté' : d.pending ? 'En attente…' : (d.type === 'mobile' ? `Téléphone${d.os ? ' · ' + d.os : ''}` : d.os || 'Ordinateur');
+    el.querySelector('.dev-tip').textContent = d.connected ? 'Envoyer des fichiers' : d.pending ? 'Annuler la demande' : 'Demander la connexion';
+  });
+
+  const n = devices.length;
+  $('#count').textContent = n ? `${n} appareil${n > 1 ? 's' : ''}` : 'Recherche…';
+  $('#emptyRadar').style.display = n ? 'none' : '';
+}
+function onDeviceClick(id) {
+  const d = devices.find(x => x.id === id); if (!d) return;
+  if (d.connected) openSend(d);
+  else if (d.pending) { send({ type: 'cancel', id }); toast('Demande annulée'); }
+  else { send({ type: 'connect', id }); toast(`Demande envoyée à ${d.name}…`); }
+}
+function setupDeviceDrop(el) {
+  const dev = () => devices.find(x => x.id === el.dataset.id);
+  el.addEventListener('dragover', e => { const d = dev(); if (d && d.connected) { e.preventDefault(); el.classList.add('drop'); } });
+  el.addEventListener('dragleave', () => el.classList.remove('drop'));
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('drop'); const d = dev(); if (d && d.connected) sendDropped([d], e); });
+}
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => e.preventDefault());
+
+// ---------- demandes entrantes ----------
+let curReq = null, reqTimer = null;
+function showNextRequest() {
+  if (curReq || !incoming.length) return;
+  curReq = incoming[0];
+  const f = curReq.from;
+  const isMob = f.type === 'mobile';
+  $('#reqIcon').className = 'req-ic' + (isMob ? ' mobile' : '');
+  $('#reqIcon').innerHTML = ic(isMob ? 'phone' : 'monitor');
+  $('#reqTitle').textContent = f.name;
+  $('#reqChip').innerHTML = `${ic('wifi')} ${isMob ? 'Téléphone' : 'Ordinateur'}${f.os ? ' · ' + esc(f.os) : ''} · ${esc(f.ip || '')}`;
+  $('#reqOverlay').classList.add('show');
+  const t0 = Date.now();
+  clearInterval(reqTimer);
+  reqTimer = setInterval(() => {
+    const left = Math.max(0, 1 - (Date.now() - t0) / 60000);
+    $('#reqTimer').style.width = (left * 100) + '%';
+    if (!left) respond(false);
+  }, 200);
+  try { new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=').play(); } catch (e) {}
+}
+function hideRequest() {
+  clearInterval(reqTimer); incoming.shift(); curReq = null;
+  $('#reqOverlay').classList.remove('show');
+  setTimeout(showNextRequest, 250);
+}
+function respond(accept) {
+  if (!curReq) return;
+  send({ type: 'respond', req_id: curReq.req_id, accept });
+  if (accept) toast(`Connecté à ${curReq.from.name}`, 'success');
+  hideRequest();
+}
+$('#reqYes').onclick = () => respond(true);
+$('#reqNo').onclick = () => respond(false);
+
+// ---------- envoi ----------
+function openSend(d) {
+  sendTarget = d;
+  const isMob = d.type === 'mobile';
+  $('#sendIcon').className = 'req-ic' + (isMob ? ' mobile' : '');
+  $('#sendIcon').innerHTML = ic(isMob ? 'phone' : 'monitor');
+  $('#sendTitle').textContent = d.name;
+  $('#sendSub').innerHTML = `<span class="dot"></span> Connecté · ${isMob ? 'Téléphone' : 'Ordinateur'} · ${esc(d.ip)}`;
+  $('#mirrorBtn').hidden = !isMob;
+  also.clear(); renderAlso();
+  $('#sendOverlay').classList.add('show');
+}
+// Envoi à plusieurs appareils : l'appareil choisi + ceux cochés dans « Envoyer aussi à »
+const also = new Set();
+let pickTargets = null;
+function renderAlso() {
+  if (!sendTarget) return;
+  const others = devices.filter(d => d.connected && d.id !== sendTarget.id);
+  [...also].forEach(id => { if (!others.some(d => d.id === id)) also.delete(id); });
+  $('#alsoBox').hidden = !others.length;
+  $('#alsoChips').innerHTML = others.map(d => `<button class="also-chip ${also.has(d.id) ? 'on' : ''}" data-id="${d.id}">${ic(also.has(d.id) ? 'check' : d.type === 'mobile' ? 'phone' : 'monitor')}${esc(d.name)}</button>`).join('');
+  $('#alsoChips').querySelectorAll('.also-chip').forEach(b => b.onclick = () => { also.has(b.dataset.id) ? also.delete(b.dataset.id) : also.add(b.dataset.id); renderAlso(); });
+  const n = also.size + 1;
+  $('#pickBtn').innerHTML = ic('upload') + (n > 1 ? `Choisir des fichiers (${n} appareils)` : 'Choisir des fichiers');
+}
+function sendTargets() {
+  if (!sendTarget) return [];
+  return [sendTarget, ...devices.filter(d => d.connected && also.has(d.id) && d.id !== sendTarget.id)];
+}
+$('#clipBtn').innerHTML = ic('clip') + 'Presse-papiers';
+$('#clipBtn').onclick = () => { const ids = sendTargets().map(d => d.id); if (ids.length) send({ type: 'clip_send', ids }); };
+
+// ---------- voir et contrôler le téléphone ----------
+let mirrorDev = null;
+$('#mirrorBtn').innerHTML = ic('phone') + 'Voir et contrôler';
+$('#mirrorClose').innerHTML = ic('x');
+function openMirror(d) {
+  mirrorDev = d;
+  $('#mirrorIcon').innerHTML = ic('phone');
+  $('#mirrorTitle').textContent = d.name;
+  setMirror('preparing', 'Préparation…');
+  $('#mirrorOverlay').classList.add('show');
+}
+function setMirror(state, text, extra = {}) {
+  const box = $('#mirrorState');
+  box.className = 'mirror-state' + (state === 'running' ? ' ok' : state === 'error' ? ' err' : ['need_pair', 'closed', 'need_usb_auth'].includes(state) ? ' idle' : '');
+  $('#mirrorText').textContent = text || (state === 'need_pair' ? 'Association nécessaire (une seule fois)' : '');
+  $('#pairBox').hidden = state !== 'need_pair';
+  $('#mirrorStop').hidden = state !== 'running';
+  $('#mirrorRetry').hidden = !['error', 'closed', 'need_pair', 'need_usb_auth'].includes(state);
+  if (state === 'need_pair') {
+    if (extra.pair_port) $('#pairPort').value = extra.pair_port;
+    setTimeout(() => $('#pairCode').focus(), 50);
+  }
+}
+$('#mirrorBtn').onclick = () => { const d = sendTarget; closeSend(); openMirror(d); send({ type: 'mirror_start', id: d.id, ...mirrorOpts() }); };
+$('#mirrorClose').onclick = () => { $('#mirrorOverlay').classList.remove('show'); };
+$('#mirrorRetry').onclick = () => { if (mirrorDev) { setMirror('connecting', 'Nouvelle tentative…'); send({ type: 'mirror_start', id: mirrorDev.id, ...mirrorOpts() }); } };
+$('#mirrorStop').onclick = () => { if (mirrorDev) send({ type: 'mirror_stop', id: mirrorDev.id }); };
+$('#pairGo').onclick = () => {
+  if (!mirrorDev) return;
+  send({ type: 'mirror_pair', id: mirrorDev.id, code: $('#pairCode').value, port: $('#pairPort').value.trim() });
+  $('#pairCode').value = '';
+};
+$('#pairCode').onkeydown = e => { if (e.key === 'Enter') $('#pairGo').click(); };
+function setMirrorMode(v) {
+  $('#mirrorMode').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  $('#camHint').hidden = v === 'screen';
+  $('#audioRow').hidden = v !== 'screen';
+}
+function mirrorOpts() { return { mode: $('#mirrorMode .on')?.dataset.v || 'screen', record: $('#mirrorRec').checked }; }
+function restartMirror(msg) {
+  if (!mirrorDev) return;
+  const running = !$('#mirrorStop').hidden;
+  if (!running) { send({ type: 'mirror_start', id: mirrorDev.id, ...mirrorOpts() }); setMirror('connecting', msg); return; }
+  toast(msg);
+  send({ type: 'mirror_stop', id: mirrorDev.id });
+  setTimeout(() => send({ type: 'mirror_start', id: mirrorDev.id, ...mirrorOpts() }), 1500);
+}
+$('#mirrorMode').querySelectorAll('button').forEach(b => b.onclick = () => {
+  if (b.classList.contains('on')) return;
+  setMirrorMode(b.dataset.v);
+  restartMirror(b.dataset.v === 'screen' ? 'Affichage de l\'écran…' : `Ouverture de la ${b.dataset.v === 'front' ? 'caméra avant' : 'caméra arrière'}…`);
+});
+$('#mirrorRec').onchange = () => { if (!$('#mirrorStop').hidden) restartMirror($('#mirrorRec').checked ? 'Relance avec enregistrement…' : 'Relance sans enregistrement…'); };
+setMirrorMode('screen');
+function setMirrorAudio(v) { $('#mirrorAudio').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); }
+$('#mirrorAudio').querySelectorAll('button').forEach(b => b.onclick = () => { if (!b.classList.contains('on')) send({ type: 'mirror_audio', value: b.dataset.v }); });
+function closeSend() { sendTarget = null; $('#sendOverlay').classList.remove('show'); }
+$('#sendClose').onclick = closeSend;
+$('#sendOverlay').onclick = e => { if (e.target.id === 'sendOverlay') closeSend(); };
+$('#disconnectBtn').onclick = () => { if (sendTarget) { send({ type: 'disconnect', id: sendTarget.id }); toast(`Déconnecté de ${sendTarget.name}`); closeSend(); } };
+// Dans l'application, on choisit par le dialogue Windows : le fichier est envoyé depuis le disque, sans copie
+$('#pickBtn').onclick = $('#drop').onclick = () => {
+  if (nativeWindow && sendTarget) { pickTargets = sendTargets().map(d => d.id); send({ type: 'pick_files', id: sendTarget.id }); }
+  else $('#filePick').click();
+};
+$('#filePick').onchange = e => { if (sendTarget && e.target.files.length) { sendTargets().forEach(d => sendFiles(d, e.target.files)); closeSend(); } e.target.value = ''; };
+const drop = $('#drop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); if (sendTarget) { sendDropped(sendTargets(), e); closeSend(); } });
+$('#folderBtn').onclick = () => { if (sendTarget) { pickTargets = sendTargets().map(d => d.id); send({ type: 'pick_folder', id: sendTarget.id }); } };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSend(); });
+
+// Envois : une file par appareil. Si la connexion coupe, l'envoi se met en pause et
+// reprend tout seul là où il s'était arrêté dès que l'appareil revient.
+const jobs = new Map();    // tid -> { tid, dev, file, xhr, cancelled }
+const queues = new Map();  // id appareil -> [tid…]
+const pumping = new Set();
+const enc = encodeURIComponent;
+class Fatal extends Error {}
+
+function sendFiles(dev, files) {
+  const q = queues.get(dev.id) || [];
+  queues.set(dev.id, q);
+  [...files].forEach(f => {
+    const tid = crypto.randomUUID().replace(/-/g, '');
+    upsert(tid, { tid, dir: 'out', name: f.name, size: f.size, done: 0, peer: dev.name, peerType: dev.type, status: 'queued' });
+    jobs.set(tid, { tid, dev, file: f });
+    q.push(tid);
+  });
+  setTab('live');
+  const list = [...files];
+  envelopeOut(dev.id, list[0]?.name, false, list.length).finally(() => pump(dev.id));
+}
+// Depuis un chemin sur le disque (menu Windows, dossiers) : c'est le moteur qui envoie
+function sendPaths(dev, items) {
+  setTab('live');
+  envelopeOut(dev.id, items[0]?.name, items[0]?.is_dir, items.length)
+    .finally(() => send({ type: 'send_paths', id: dev.id, paths: items.map(i => i.path) }));
+}
+let lastDrop = null, nativeWindow = false;
+function sendDropped(devs, e) {
+  const dt = e.dataTransfer, files = [];
+  let hasDir = false;
+  const items = [...(dt.items || [])];
+  if (items.length && items[0].webkitGetAsEntry) {
+    items.forEach(it => {
+      const entry = it.webkitGetAsEntry();
+      if (entry && entry.isDirectory) hasDir = true;
+      else if (it.kind === 'file') { const f = it.getAsFile(); if (f) files.push(f); }
+    });
+  } else files.push(...dt.files);
+  if (!nativeWindow) {
+    if (files.length) devs.forEach(dev => sendFiles(dev, files));
+    if (hasDir) toast('Pour un dossier, utilisez « Envoyer un dossier » dans le panneau d\'envoi', 'error');
+    return;
+  }
+  // Le moteur reçoit les chemins juste après : c'est mieux (pas de copie). Sinon, on envoie depuis la page.
+  lastDrop = { ids: devs.map(d => d.id), t: Date.now(), timer: setTimeout(() => {
+    lastDrop = null;
+    if (files.length) devs.forEach(dev => sendFiles(dev, files));
+    if (hasDir) toast('Ce dossier n\'a pas pu être lu : utilisez « Envoyer un dossier »', 'error');
+  }, 1200) };
+}
+
+// ---------- enveloppe ----------
+const coreEl = () => $('.core-in');
+function deviceEl(id) {
+  return document.querySelector(`.dev[data-id="${id}"] .dev-ic`) || coreEl();
+}
+function envelopeOut(id, name, isDir, count) {
+  return PyEnvelope.send(coreEl(), deviceEl(id), { label: PyEnvelope.label(name, isDir), count }).catch(() => {});
+}
+const lastEnvelope = new Map();
+function envelopeIn(id, name, isDir) {
+  // Plusieurs fichiers à la suite : une seule enveloppe à la fois par appareil
+  if (Date.now() - (lastEnvelope.get(id) || 0) < 1800) return;
+  lastEnvelope.set(id, Date.now());
+  PyEnvelope.receive(deviceEl(id), coreEl(), { label: PyEnvelope.label(name, isDir) }).catch(() => {});
+}
+
+// ---------- choix de l'appareil ----------
+let share = null;
+function openShare(items) {
+  share = { items: share ? [...share.items, ...items.filter(i => !share.items.some(o => o.path === i.path))] : items, waiting: null, sel: share ? share.sel : new Set() };
+  const n = share.items.length;
+  $('#shareTitle').textContent = n > 1 ? `Envoyer ${n} éléments` : `Envoyer ${share.items[0].name}`;
+  $('#shareNames').textContent = n > 1 ? share.items.map(i => i.name).join(', ') : (share.items[0].is_dir ? 'Dossier — compressé à l\'envoi, décompressé à l\'arrivée' : fmtSize(share.items[0].size));
+  $('#shareOverlay').classList.add('show');
+  renderShare();
+}
+function closeShare() {
+  if (share && share.waiting) send({ type: 'cancel', id: share.waiting });
+  share = null;
+  $('#shareOverlay').classList.remove('show');
+}
+function renderShare() {
+  if (!share) return;
+  // Un appareil qui vient d'accepter est coché automatiquement
+  if (share.waiting) {
+    const d = devices.find(x => x.id === share.waiting);
+    if (d && d.connected) { share.sel.add(d.id); share.waiting = null; }
+  }
+  [...share.sel].forEach(id => { const d = devices.find(x => x.id === id); if (!d || !d.connected) share.sel.delete(id); });
+  $('#shareList').innerHTML = devices.length ? devices.map(d => {
+    const on = share.sel.has(d.id);
+    const state = d.connected ? (on ? 'Sélectionné' : 'Connecté — cliquer pour sélectionner') : d.id === share.waiting ? 'En attente d\'acceptation…' : 'Demander la connexion';
+    return `<button class="share-row ${d.type}${d.connected ? ' connected' : ''}${on ? ' sel' : ''}${d.id === share.waiting ? ' pending' : ''}" data-id="${d.id}"><span class="av">${ic(d.type === 'mobile' ? 'phone' : 'monitor')}</span><span><b>${esc(d.name)}</b><small>${state}</small></span>${d.connected ? `<span class="tick">${ic('check')}</span>` : ''}</button>`;
+  }).join('') : `<div class="empty">Aucun appareil détecté sur le réseau.<br>Ouvrez PyDrop sur l'autre appareil.</div>`;
+  $('#shareList').querySelectorAll('.share-row').forEach(b => b.onclick = () => {
+    const d = devices.find(x => x.id === b.dataset.id);
+    if (!d || !share) return;
+    if (d.connected) { share.sel.has(d.id) ? share.sel.delete(d.id) : share.sel.add(d.id); return renderShare(); }
+    if (share.waiting === d.id) return;
+    if (share.waiting) send({ type: 'cancel', id: share.waiting });
+    share.waiting = d.id;
+    send({ type: 'connect', id: d.id });
+    renderShare();
+  });
+  const n = share.sel.size;
+  $('#shareGo').disabled = !n;
+  $('#shareGo').innerHTML = ic('send') + (n > 1 ? `Envoyer à ${n} appareils` : 'Envoyer');
+}
+$('#shareGo').onclick = () => {
+  if (!share || !share.sel.size) return;
+  const items = share.items, targets = devices.filter(d => d.connected && share.sel.has(d.id));
+  share = null; $('#shareOverlay').classList.remove('show');
+  targets.forEach(d => sendPaths(d, items));
+};
+$('#shareClose').onclick = closeShare;
+$('#shareOverlay').onclick = e => { if (e.target.id === 'shareOverlay') closeShare(); };
+$('#shellToggle').onchange = e => send({ type: 'shell_integration', value: e.target.checked });
+$('#videoCookies').onchange = e => send({ type: 'video_cookies', value: e.target.value });
+async function pump(devId) {
+  if (pumping.has(devId)) return;
+  pumping.add(devId);
+  const q = queues.get(devId) || [];
+  while (q.length) {
+    const job = jobs.get(q[0]);
+    if (!job || job.cancelled) { q.shift(); continue; }
+    try {
+      await runJob(job);
+      q.shift();
+    } catch (err) {
+      if (job.cancelled) { q.shift(); continue; }
+      if (err instanceof Fatal) { upsert(job.tid, { status: 'error', error: err.message }); q.shift(); continue; }
+      upsert(job.tid, { status: 'paused', note: err.message });
+      await waitForDevice(job);
+    }
+  }
+  pumping.delete(devId);
+}
+function waitForDevice(job) {
+  return new Promise(resolve => {
+    const timer = setInterval(() => {
+      const d = devices.find(x => x.id === job.dev.id);
+      if (job.cancelled || (d && d.connected)) { clearInterval(timer); setTimeout(resolve, 1200); }
+    }, 1500);
+  });
+}
+async function runJob(job) {
+  const d = devices.find(x => x.id === job.dev.id);
+  if (!d) throw new Error(`${job.dev.name} n'est plus sur le réseau`);
+  if (!d.connected) throw new Error(`Reconnectez-vous à ${d.name} pour reprendre`);
+  if (d.type === 'mobile') return stageForPhone(job, d);
+
+  const base = `http://${d.ip}:${d.port}`;
+  const auth = `from=${enc(me.id)}&token=${enc(d.token)}&tid=${job.tid}`;
+  // Le destinataire nous dit combien il a déjà reçu (reprise après coupure)
+  let r;
+  try { r = await fetch(`${base}/api/upload/status?${auth}`); }
+  catch (e) { throw new Error(`${d.name} est injoignable`); }
+  if (r.status === 403) { send({ type: 'disconnect', id: d.id }); throw new Error(`Connexion perdue — reconnectez-vous à ${d.name} pour reprendre`); }
+  const st = await r.json();
+  if (st.cancelled) { job.cancelled = true; upsert(job.tid, { status: 'cancelled' }); return; }
+  const offset = Math.min(st.received || 0, job.file.size);
+  if (offset) toast(`Reprise de ${job.file.name} à ${Math.floor(offset / job.file.size * 100)} %`);
+  const url = `${base}/api/upload?${auth}&name=${enc(job.file.name)}&size=${job.file.size}&offset=${offset}`;
+  const status = await xhrSend(job, url, job.file.slice(offset), offset);
+  if (status === 200) { upsert(job.tid, { status: 'done', done: job.file.size }); logSent(transfers.get(job.tid)); return; }
+  if (status === 410) { job.cancelled = true; upsert(job.tid, { status: 'cancelled' }); toast(`${d.name} a annulé ${job.file.name}`); return; }
+  if (status === 403) { send({ type: 'disconnect', id: d.id }); throw new Error(`Connexion perdue — reconnectez-vous à ${d.name} pour reprendre`); }
+  if (status === 507) throw new Fatal(`Espace disque insuffisant sur ${d.name}`);
+  throw new Error('Transfert interrompu');
+}
+function xhrSend(job, url, body, offset) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    job.xhr = xhr;
+    xhr.open('POST', url);
+    xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+    upsert(job.tid, { status: 'active', t0: Date.now(), base: offset, done: offset, speed: 0, note: '' });
+    xhr.upload.onprogress = e => { if (!job.cancelled) upsert(job.tid, { done: offset + e.loaded }); };
+    xhr.onload = () => { job.xhr = null; resolve(xhr.status); };
+    xhr.onerror = () => { job.xhr = null; reject(new Error('Connexion coupée')); };
+    xhr.onabort = () => { job.xhr = null; reject(new Error('Interrompu')); };
+    xhr.send(body);
+  });
+}
+async function stageForPhone(job, d) {
+  // Le fichier est préparé sur ce PC puis le téléphone le télécharge (avec reprise)
+  upsert(job.tid, { phase: 'Préparation…' });
+  const status = await xhrSend(job, `/api/stage?to=${enc(d.id)}&name=${enc(job.file.name)}&size=${job.file.size}&tid=${job.tid}`, job.file, 0)
+    .catch(() => { throw new Fatal('Préparation impossible'); });
+  if (job.cancelled) return;
+  if (status === 507) throw new Fatal('Espace disque insuffisant sur ce PC');
+  if (status !== 200) throw new Fatal('Le téléphone n\'est plus connecté');
+  upsert(job.tid, { done: 0, phase: 'En attente du téléphone…', t0: Date.now(), base: 0 });
+}
+function cancelTransfer(tid) {
+  const t = transfers.get(tid);
+  if (!t) return;
+  if (t.dir === 'in') { send({ type: 'cancel_rx', tid }); upsert(tid, { status: 'cancelled' }); return; }
+  const job = jobs.get(tid);
+  if (!job) send({ type: 'cancel_tx', tid });  // fichier pris par un téléphone via l'explorateur
+  if (job) {
+    job.cancelled = true;
+    job.xhr?.abort();
+    const d = devices.find(x => x.id === job.dev.id) || job.dev;
+    if (d.type === 'mobile') send({ type: 'cancel_tx', tid });
+    else if (d.token) fetch(`http://${d.ip}:${d.port}/api/upload/cancel?from=${enc(me.id)}&token=${enc(d.token)}&tid=${tid}`, { method: 'POST' }).catch(() => {});
+  }
+  upsert(tid, { status: 'cancelled' });
+  toast(`${t.name} annulé`);
+}
+function logSent(t) {
+  if (!t || t.logged) return; t.logged = true;
+  const item = { tid: t.tid, name: t.name, size: t.size, to: t.peer, to_type: t.peerType, ts: Date.now() / 1000, dir: 'out' };
+  send({ type: 'sent', ...item });
+  history.unshift(item); renderHistory();
+}
+
+// ---------- liste des transferts ----------
+function upsert(tid, patch) {
+  const t = Object.assign(transfers.get(tid) || {}, patch);
+  if (patch.done != null && t.status === 'active' && t.t0) {
+    const dt = (Date.now() - t.t0) / 1000;
+    if (dt > .4) t.speed = (t.done - (t.base || 0)) / dt;
+  }
+  transfers.set(tid, t);
+  renderTransfer(t);
+}
+function transferSub(t) {
+  const arrow = t.dir === 'in' ? `<span class="in">${ic('down')}</span>` : `<span class="out">${ic('up')}</span>`;
+  const who = `${t.dir === 'in' ? 'de' : 'vers'} ${esc(t.peer)}`;
+  if (t.status === 'error') return `${ic('alert')} ${esc(t.error)}`;
+  if (t.status === 'cancelled') return `${ic('x')} Annulé · ${who}`;
+  if (t.status === 'done') return `${arrow} ${fmtSize(t.size)} · ${who}`;
+  if (t.status === 'queued') return `${ic('clock')} En file d'attente · ${who}`;
+  const pct = t.size ? Math.floor(t.done / t.size * 100) : 0;
+  if (t.status === 'paused') {
+    const why = t.note || (t.dir === 'in' ? `reprendra quand ${t.peer} renverra la suite` : `reprise automatique au retour de ${t.peer}`);
+    return `${ic('pause')} En pause ${pct}% · ${esc(why)}`;
+  }
+  return `${arrow} ${t.phase ? esc(t.phase) + ' ' : ''}${pct}% · ${fmtSize(t.done)} / ${fmtSize(t.size)}${t.speed ? ' · ' + fmtSize(t.speed) + '/s' : ''}`;
+}
+function renderTransfer(t) {
+  const list = $('#liveList');
+  let el = list.querySelector(`[data-tid="${t.tid}"]`);
+  if (!el) {
+    el = document.createElement('div'); el.dataset.tid = t.tid;
+    list.prepend(el);
+  }
+  const running = ['active', 'queued', 'paused'].includes(t.status);
+  el.className = `item ${t.dir}${t.status === 'error' || t.status === 'cancelled' ? ' err' : ''}${t.status === 'paused' ? ' paused' : ''}`;
+  let act = '';
+  if (t.status === 'done' && t.dir === 'in' && t.path) act = `<button class="icon-btn" data-open title="${isInstaller(t.name) ? 'Installer' : 'Ouvrir'}">${ic('open')}</button><button class="icon-btn" data-show title="Afficher dans le dossier">${ic('folder')}</button>`;
+  else if (t.status === 'done') act = `<span class="ok-ic">${ic('check')}</span>`;
+  else if (running) act = `<button class="icon-btn cancel" data-cancel title="Annuler le transfert">${ic('x')}</button>`;
+  el.innerHTML = `${fileBadge(t.name, t.isDir, t.kind)}<div class="it-main"><div class="it-name" title="${esc(t.name)}">${esc(t.name)}</div><div class="it-sub">${transferSub(t)}</div></div><div class="it-act">${act}</div>${running ? `<div class="bar"><i style="width:${t.size ? t.done / t.size * 100 : 0}%"></i></div>` : ''}`;
+  el.querySelector('[data-open]')?.addEventListener('click', () => send({ type: 'open_file', path: t.path }));
+  el.querySelector('[data-show]')?.addEventListener('click', () => send({ type: 'open_file', path: t.path, select: true }));
+  el.querySelector('[data-cancel]')?.addEventListener('click', () => cancelTransfer(t.tid));
+  const active = [...transfers.values()].filter(x => ['active', 'queued', 'paused'].includes(x.status)).length;
+  $('#liveN').textContent = active; $('#liveN').classList.toggle('show', active > 0);
+  renderLiveEmpty();
+}
+function renderLiveEmpty() {
+  const list = $('#liveList');
+  const has = list.querySelector('.item');
+  let e = list.querySelector('.empty');
+  if (!has && !e) list.innerHTML = `<div class="empty">${ic('inbox')}<br>Aucun transfert en cours.<br>Connectez-vous à un appareil pour échanger des fichiers.</div>`;
+  if (has && e) e.remove();
+}
+function renderHistory() {
+  const list = $('#histList');
+  if (!history.length) { list.innerHTML = `<div class="empty">${ic('clock')}<br>L'historique est vide.</div>`; return; }
+  list.innerHTML = history.slice(0, 60).map((h, i) => {
+    const inbound = h.dir === 'in';
+    return `<div class="item ${inbound ? 'in' : 'out'}">${fileBadge(h.name || '', h.is_dir)}<div class="it-main"><div class="it-name" title="${esc(h.name)}">${esc(h.name)}</div><div class="it-sub"><span class="${inbound ? 'in' : 'out'}">${ic(inbound ? 'down' : 'up')}</span>${inbound ? 'de' : 'vers'} ${esc(inbound ? h.from : h.to)} · ${fmtSize(h.size)} · ${timeAgo(h.ts)}</div></div><div class="it-act">${inbound && h.path ? `<button class="icon-btn" data-i="${i}" title="Afficher dans le dossier">${ic('folder')}</button>` : ''}</div></div>`;
+  }).join('');
+  list.querySelectorAll('[data-i]').forEach(b => b.onclick = () => send({ type: 'open_file', path: history[b.dataset.i].path, select: true }));
+}
+$('#clearHist').onclick = () => { send({ type: 'clear_history' }); history = []; renderHistory(); };
+
+let currentTab = 'live';
+function setTab(name) {
+  currentTab = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
+  $('#liveList').hidden = name !== 'live';
+  $('#histList').hidden = name !== 'hist';
+  $('#histFoot').hidden = name !== 'hist';
+  $('#notifList').hidden = $('#notifFoot').hidden = name !== 'notif';
+  $('#clipList').hidden = $('#clipFoot').hidden = name !== 'clip';
+  if (name === 'notif') { $('#notifN').classList.remove('show'); unread.notif = 0; renderNotifs(); }
+  if (name === 'clip') { $('#clipN').classList.remove('show'); unread.clip = 0; renderClips(); }
+}
+const unread = { notif: 0, clip: 0 };
+$('#histTab').innerHTML = ic('clock');
+function bump(sel) {
+  const k = sel === '#notifN' ? 'notif' : 'clip';
+  unread[k]++;
+  $(sel).textContent = unread[k]; $(sel).classList.add('show');
+}
+
+// ---------- notifications du téléphone ----------
+let notifs = [], muted = [], clips = [];
+function renderNotifs() {
+  const list = $('#notifList');
+  if (list.hidden && list.childElementCount) return;
+  if (!notifs.length) {
+    list.innerHTML = `<div class="empty">${ic('bell')}<br>Les notifications de votre téléphone (WhatsApp, SMS, appels…) s'afficheront ici.<br><br>Sur le téléphone : onglet <b>Transfert</b> → <b>Notifications sur le PC</b>.</div>`;
+    return;
+  }
+  list.innerHTML = notifs.map((n, i) => {
+    const icon = n.icon ? `<img src="data:image/png;base64,${n.icon}" alt="">` : esc((n.app || '?').slice(0, 1).toUpperCase());
+    const replyStatus = n.replySent ? `<div style="font-size:12px;color:#10b981;margin-top:4px;display:flex;align-items:center;gap:4px">${ic('check')} Répondu : « ${esc(n.replySent)} »</div>` : '';
+    const replyBox = n.can_reply ? `
+      <div class="nt-reply-box" id="repbox_${n.id}" style="display:none;margin-top:8px">
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" class="input grow" id="repinput_${n.id}" placeholder="Répondre à ${esc(n.title || n.app)}..." style="padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.25);color:inherit;flex:1">
+          <button class="btn primary" data-repsend="${n.id}" style="padding:6px 12px;font-size:12px;white-space:nowrap;display:flex;align-items:center;gap:4px">${ic('send')} Envoyer</button>
+        </div>
+      </div>` : '';
+    return `<div class="item nt" id="nt_${n.id}"><div class="nt-ic">${icon}</div><div class="it-main"><div class="nt-app"><b>${esc(n.app)}</b>· ${esc(n.from)} · ${timeAgo(n.ts)}</div>${n.title ? `<div class="nt-title">${esc(n.title)}</div>` : ''}${n.text ? `<div class="nt-text">${esc(n.text)}</div>` : ''}${replyStatus}${replyBox}</div>
+      <div class="it-act">${n.can_reply ? `<button class="icon-btn" data-nreply="${n.id}" title="Répondre">${ic('reply')}</button>` : ''}<button class="icon-btn" data-ncopy="${i}" title="Copier le texte">${ic('copy')}</button><button class="icon-btn" data-nmute="${i}" title="Ne plus afficher ${esc(n.app)}">${ic('belloff')}</button></div></div>`;
+  }).join('');
+  list.querySelectorAll('[data-nreply]').forEach(b => b.onclick = () => {
+    const box = document.getElementById('repbox_' + b.dataset.nreply);
+    if (!box) return;
+    const isShown = box.style.display !== 'none';
+    box.style.display = isShown ? 'none' : 'block';
+    if (!isShown) {
+      const input = document.getElementById('repinput_' + b.dataset.nreply);
+      if (input) input.focus();
+    }
+  });
+  list.querySelectorAll('[data-repsend]').forEach(b => {
+    const nid = b.dataset.repsend;
+    const doSend = () => {
+      const input = document.getElementById('repinput_' + nid);
+      if (!input || !input.value.trim()) return;
+      const text = input.value.trim();
+      send({ type: 'notif_reply', id: nid, text: text });
+      const n = notifs.find(item => item.id === nid);
+      if (n) n.replySent = text;
+      renderNotifs();
+      toast('Réponse envoyée au téléphone', 'success');
+    };
+    b.onclick = doSend;
+    const input = document.getElementById('repinput_' + nid);
+    if (input) {
+      input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); doSend(); } };
+    }
+  });
+  list.querySelectorAll('[data-ncopy]').forEach(b => b.onclick = () => { const n = notifs[b.dataset.ncopy]; send({ type: 'clip_copy', text: [n.title, n.text].filter(Boolean).join('\n') }); toast('Texte copié'); });
+  list.querySelectorAll('[data-nmute]').forEach(b => b.onclick = () => { const n = notifs[b.dataset.nmute]; send({ type: 'notif_mute', pkg: n.pkg, app: n.app }); toast(`${n.app} ne s'affichera plus`); });
+}
+function renderMuted() {
+  const box = $('#mutedBox');
+  box.hidden = !muted.length;
+  box.innerHTML = muted.length ? 'Masquées : ' + muted.map(m => `<button class="also-chip" style="height:24px;margin:3px 3px 0 0" data-pkg="${esc(m.pkg)}" title="Afficher de nouveau">${esc(m.app)} ${ic('x')}</button>`).join('') : '';
+  box.querySelectorAll('[data-pkg]').forEach(b => b.onclick = () => send({ type: 'notif_unmute', pkg: b.dataset.pkg }));
+}
+$('#clearNotif').innerHTML = ic('trash') + 'Effacer les notifications';
+$('#clearNotif').onclick = () => { notifs = []; send({ type: 'notif_clear' }); renderNotifs(); };
+$('#notifToast').onchange = e => send({ type: 'notif_toast', value: e.target.checked });
+$('#allowRemote').onchange = e => send({ type: 'allow_remote', value: e.target.checked });
+$('#clipAuto').onchange = e => send({ type: 'clip_auto', value: e.target.checked });
+
+// ---------- presse-papiers partagé ----------
+function renderClips() {
+  const list = $('#clipList');
+  const connected = devices.filter(d => d.connected);
+  $('#clipAll').innerHTML = ic('clip') + (connected.length > 1 ? `Envoyer mon presse-papiers aux ${connected.length} appareils` : 'Envoyer mon presse-papiers');
+  if (!clips.length) {
+    list.innerHTML = `<div class="empty">${ic('clip')}<br>Copiez un texte ou un lien (Ctrl+C), puis envoyez-le au téléphone.<br>Ce que le téléphone vous envoie est copié ici automatiquement : il suffit de faire Ctrl+V.</div>`;
+    return;
+  }
+  list.innerHTML = clips.map((c, i) => {
+    const url = /^https?:\/\/\S+$/i.test(c.text.trim());
+    return `<div class="item clip ${c.dir}"><div class="clip-ic">${ic(url ? 'link' : 'clip')}</div><div class="it-main"><div class="nt-app"><span class="${c.dir === 'in' ? 'in' : 'out'}">${c.dir === 'in' ? 'de ' + esc(c.from) : 'vers ' + esc(c.to)}</span>· ${timeAgo(c.ts)}</div><div class="clip-text">${esc(c.text)}</div></div>
+      <div class="it-act"><button class="icon-btn" data-ccopy="${i}" title="Copier">${ic('copy')}</button>${url ? `<button class="icon-btn" data-curl="${i}" title="Ouvrir le lien">${ic('open')}</button>` : ''}</div></div>`;
+  }).join('');
+  list.querySelectorAll('[data-ccopy]').forEach(b => b.onclick = () => { send({ type: 'clip_copy', text: clips[b.dataset.ccopy].text }); toast('Copié — Ctrl+V pour coller'); });
+  list.querySelectorAll('[data-curl]').forEach(b => b.onclick = () => send({ type: 'open_url', url: clips[b.dataset.curl].text.trim() }));
+}
+$('#clipAll').onclick = () => {
+  const ids = devices.filter(d => d.connected).map(d => d.id);
+  if (!ids.length) return toast('Connectez-vous d\'abord à un appareil', 'error');
+  send({ type: 'clip_send', ids });
+};
+function isInstaller(name) { return /\.(exe|msi|msix|msixbundle|appx|apk)$/i.test(name || ''); }
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => setTab(t.dataset.tab));
+
+// ---------- toasts ----------
+function toastAction(msg, label, fn, kind = '') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.innerHTML = `<span></span><button></button>`;
+  el.querySelector('span').textContent = msg;
+  el.querySelector('button').textContent = label;
+  el.querySelector('button').onclick = () => { fn(); el.remove(); };
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.transition = '.3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 7000);
+}
+function toast(msg, kind = '') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.transition = '.3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3200);
+}
+
+setInterval(() => { if (!$('#histList').hidden) renderHistory(); if (!$('#notifList').hidden) renderNotifs(); if (!$('#clipList').hidden) renderClips(); }, 60000);
+renderLiveEmpty();
+connectWS();
+</script>
+</body>
+</html>
